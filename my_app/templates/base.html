@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wdth,wght@0,91.8,655;1,91.8,655&display=swap"
+          rel="stylesheet">
+    <style>
+      html{
+        display: grid;
+        text-align: center;
+        color: white;
+        background-color: #14111A;
+        font-family: "Open Sans", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 655;
+        font-style: normal;
+        font-variation-settings:
+          "wdth" 91.8;
+
+      }
+      a{
+        text-decoration: none;
+        color: #007bff;
+      }
+      .panel a{
+        margin-right: 1rem;
+      }
+    </style>
+    {% block extra_head %}{% endblock %}
+    <h1>Добро пожаловать на сайт - Проблемы городов!</h1>
+</head>
+<body>
+    <div>
+        <a href="{% url 'index' %}">Главная страница</a>
+        {% if user.is_authenticated %}
+            <p>Привет, {{ user.username }}!</p>
+            <div class="panel">
+              <h3>
+                <a href="{% url 'map' %}">Карта проблем</a>
+                <a href="{% url 'logout' %}">Выйти</a>
+                <a href="{% url 'problem_create' %}">Создать заявку о проблеме</a>
+                <a href="{% url 'problem_list' %}">Заявки</a>
+            </h3>
+            </div>
+        {% else %}
+            <p>
+                <a href="{% url 'login' %}">Войти </a>
+                или
+                <a href="{% url 'registration' %}">Зарегистрироваться</a>
+            </p>
+        {% endif %}
+    </div>
+    <div>
+      {% block content %} {% endblock %}
+    </div>
+</body>
+<footer>
+
+</footer>
+</html>

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+{{ block.super }}
+<title>Карта всех проблем</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+      #map {
+        height: 600px;
+        width: 100%;
+        margin: 20px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .map-container {
+        margin: 20px 0;
+    }
+    .problem-list {
+        margin-top: 20px;
+    }
+    .problem-item {
+        border: 0.5px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: #24212B;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8em;
+        margin-left: 10px;
+    }
+    .status-new { background-color: #d1ecf1; color: #0c5460; }
+    .status-in_progress { background-color: #fff3cd; color: #856404; }
+    .status-completed { background-color: #d4edda; color: #155724; }
+    .status-rejected { background-color: #f8d7da; color: #721c24; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Карта городских проблем</h1>
+
+    <div class="map-container">
+        <p>На карте показаны все заявки с координатами. Нажмите на маркер, чтобы увидеть подробности.</p>
+        <div id="map"></div>
+    </div>
+
+    <div class="problem-list">
+        <h3>Все заявки с координатами ({{ problems|length }})</h3>
+        {% if problems %}
+            {% for problem in problems %}
+                <div class="problem-item">
+                    <h4>
+                        {{ problem.title }}
+                        <span class="status-badge status-{{ problem.status|lower }}">{{ problem.status }}</span>
+                    </h4>
+                    <p><strong>Тип:</strong> {{ problem.type }}</p>
+                    <p><strong>Координаты:</strong> {{ problem.lat|floatformat:6 }}, {{ problem.lng|floatformat:6 }}</p>
+                    <p>{{ problem.description }}</p>
+                    <a href="{{ problem.url }}">Подробнее →</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Пока нет заявок с указанными координатами.</p>
+            <a href="{% url 'problem_create' %}" class="btn btn-primary">Создать первую заявку</a>
+        {% endif %}
+    </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('map').setView([55.751244, 37.618423], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        {% for problem in problems %}
+            var marker = L.marker([{{ problem.lat }}, {{ problem.lng }}]).addTo(map);
+            marker.bindPopup(`
+                <div style="max-width: 300px;">
+                    <h4 style="margin-top: 0;">{{ problem.title|escapejs }}</h4>
+                    <p><strong>Тип:</strong> {{ problem.type|escapejs }}</p>
+                    <p><strong>Статус:</strong> <span class="status-{{ problem.status|lower }}">
+                    {{ problem.status|escapejs }}</span></p>
+                    <p>{{ problem.description|escapejs }}</p>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <a href="{{ problem.url }}" style="background-color: #007bff; color: white; padding: 5px 10px;
+                        text-decoration: none; border-radius: 3px; display: inline-block;">
+                            Подробнее
+                        </a>
+                    </div>
+                </div>
+            `);
+        {% endfor %}
+
+        {% if problems %}
+            map.setView([{{ problems.0.lat }}, {{ problems.0.lng }}], 13);
+        {% endif %}
+
+        L.control.zoom({
+            position: 'topright'
+        }).addTo(map);
+
+        L.control.scale({
+            imperial: false,
+            metric: true
+        }).addTo(map);
+
+        var legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info legend');
+            div.style.backgroundColor = 'white';
+            div.style.padding = '10px';
+            div.style.borderRadius = '5px';
+            div.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+            div.innerHTML = '<h4 style="margin-top:0;">Статусы:</h4>' +
+                '<div><span style="background-color:#d1ecf1;
+                display:inline-block; width:15px; height:15px; margin-right:5px;"></span> Новая</div>' +
+                '<div><span style="background-color:#fff3cd;
+                display:inline-block; width:15px; height:15px; margin-right:5px;"></span> В процессе</div>' +
+                '<div><span style="background-color:#d4edda;
+                display:inline-block; width:15px; height:15px; margin-right:5px;"></span> Решена</div>' +
+                '<div><span style="background-color:#f8d7da;
+                display:inline-block; width:15px; height:15px; margin-right:5px;"></span> Отклонена</div>';
+            return div;
+        };
+        legend.addTo(map);
+    });
+</script>
+{% endblock %}

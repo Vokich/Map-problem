@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+{{ block.super }}
+<style>
+  .problem-item{
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    margin-up: 1.2rem
+    border-radius: 5px;
+    background-color: #24212B;
+  }
+  .problem-item p{
+    font-size: 1.1rem;
+  }
+  .problem-item h3{
+    font-size: 1.2rem;
+  }
+  .add-problem a{
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <h1>Проблемы города</h1>
+    <div class="add-problem">
+      <a href="{% url 'problem_create' %}">Добавить проблему</a>
+    </div>
+    {% for problem in problems %}
+    <div class="problem-item">
+        <h3><a href="{{ problem.get_absolute_url }}">{{ problem.title }}</a></h3>
+        <p>{{ problem.address }}</p>
+        <p>{{ problem.created_at|date:"d.m.Y" }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

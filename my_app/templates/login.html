@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Войти</button>
+</form>
+{% if form.non_field_errors %}
+    <div style="color:red;">{{ form.non_field_errors }}</div>
+{% endif %}
+{% endblock %}

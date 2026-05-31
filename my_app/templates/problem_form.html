@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+{{ block.super }}
+<title>Создание заявки</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  body {
+    background-color: #14111A;
+    color: #E0E0E0;
+  }
+
+  #map {
+    height: 400px;
+    margin-bottom: 20px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background-color: #2C2730;
+  }
+
+  .map-container {
+    margin-bottom: 20px;
+  }
+
+  .coordinates-info {
+    background-color: #2C2730;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #444;
+  }
+
+  .coordinates-info p {
+    margin: 8px 0;
+    font-size: 1.2rem;
+    color: #B0B0B0;
+  }
+
+  .coordinates-info strong {
+    color: #FFFFFF;
+  }
+
+  #latitude-display, #longitude-display, #address-display {
+    font-weight: bold;
+  }
+
+  form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 25px;
+    background-color: #2C2730;
+    border-radius: 8px;
+    border: 1px solid #444;
+  }
+
+  h1 {
+    color: #FFFFFF;
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  h3 {
+    color: #FFFFFF;
+    margin-bottom: 10px;
+  }
+
+  p {
+    color: #B0B0B0;
+    margin-bottom: 15px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #FFFFFF;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #3A3540;
+    color: #E0E0E0;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    margin-left: 10px;
+  }
+
+  .btn-secondary:hover {
+    background-color: #545b62;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  small {
+    color: #888;
+    font-size: 0.9em;
+    display: block;
+    margin-top: 5px;
+  }
+
+  .error {
+    color: #ff6b6b;
+    margin-top: 5px;
+    font-size: 0.9em;
+    background-color: rgba(255, 107, 107, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    border-left: 3px solid #ff6b6b;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #444;
+  }
+
+  select option {
+    background-color: #3A3540;
+    color: #E0E0E0;
+  }
+
+  input[type="file"] {
+    padding: 10px;
+    background-color: #3A3540;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #B0B0B0;
+  }
+
+  input[type="file"]::file-selector-button {
+    background-color: #444;
+    color: #E0E0E0;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
+  input[type="file"]::file-selector-button:hover {
+    background-color: #555;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <h1>Создание новой заявки</h1>
+
+    <div class="map-container">
+        <h3>Укажите местоположение проблемы на карте:</h3>
+        <p>Нажмите на карту, чтобы отметить место. Маркер можно перемещать.</p>
+
+        <div class="coordinates-info">
+            <p><strong>Текущие координаты:</strong></p>
+            <p>Широта: <span id="latitude-display">не выбрано</span></p>
+            <p>Долгота: <span id="longitude-display">не выбрано</span></p>
+            <p>Адрес: <span id="address-display">не определен</span></p>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Название проблемы:</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <div class="error">{{ form.title.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label>Описание:</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div class="error">{{ form.description.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label>Тип проблемы:</label>
+            {{ form.problem_type }}
+            {% if form.problem_type.errors %}
+                <div class="error">{{ form.problem_type.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label>Адрес:</label>
+            {{ form.address }}
+            <small>Адрес будет автоматически определен по выбранной точке на карте</small>
+            {% if form.address.errors %}
+                <div class="error">{{ form.address.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label>Фотография проблемы (необязательно):</label>
+            {{ form.picture }}
+            {% if form.picture.errors %}
+                <div class="error">{{ form.picture.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="display: none;">
+            {{ form.latitude }}
+            {{ form.longitude }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Создать заявку</button>
+            <a href="{% url 'problem_list' %}" class="btn btn-secondary">Отмена</a>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="error">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([55.751244, 37.618423], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    var marker = null;
+    var latitudeField = document.getElementById('id_latitude');
+    var longitudeField = document.getElementById('id_longitude');
+    var latitudeDisplay = document.getElementById('latitude-display');
+    var longitudeDisplay = document.getElementById('longitude-display');
+    var addressDisplay = document.getElementById('address-display');
+    var addressField = document.getElementById('id_address');
+    if (!latitudeField || !longitudeField) {
+        console.error('Не найдены поля для координат');
+        latitudeField = document.createElement('input');
+        longitudeField = document.createElement('input');
+        latitudeField.type = 'hidden';
+        longitudeField.type = 'hidden';
+        latitudeField.id = 'id_latitude';
+        longitudeField.id = 'id_longitude';
+        document.querySelector('form').appendChild(latitudeField);
+        document.querySelector('form').appendChild(longitudeField);
+    }
+    function updateCoordinates(lat, lng) {
+        latitudeField.value = lat;
+        longitudeField.value = lng;
+        latitudeDisplay.textContent = lat.toFixed(6);
+        longitudeDisplay.textContent = lng.toFixed(6);
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.display_name) {
+                    addressDisplay.textContent = data.display_name;
+                    if (addressField) {
+                        addressField.value = data.display_name;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка получения адреса:', error);
+                addressDisplay.textContent = 'Адрес не определен';
+            });
+    }
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        marker = L.marker([lat, lng], {
+            draggable: true
+        }).addTo(map);
+        updateCoordinates(lat, lng);
+        marker.on('dragend', function(e) {
+            var newLat = marker.getLatLng().lat;
+            var newLng = marker.getLatLng().lng;
+            updateCoordinates(newLat, newLng);
+        });
+    });
+    if (latitudeField && longitudeField && latitudeField.value && longitudeField.value) {
+        var lat = parseFloat(latitudeField.value);
+        var lng = parseFloat(longitudeField.value);
+        marker = L.marker([lat, lng], {
+            draggable: true
+        }).addTo(map);
+        map.setView([lat, lng], 15);
+        updateCoordinates(lat, lng);
+        marker.on('dragend', function(e) {
+            var newLat = marker.getLatLng().lat;
+            var newLng = marker.getLatLng().lng;
+            updateCoordinates(newLat, newLng);
+        });
+    }
+    L.control.zoom({
+        position: 'topright'
+    }).addTo(map);
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+{{ block.super }}
+<title>{{ problem.title }}</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  #problem-map {
+      height: 400px;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+.problem-info {
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #2C2730;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.problem-image {
+    max-width: 100%;
+    height: auto;
+    margin: 10px 0;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.problem-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.meta-item {
+    background-color: #24212B;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+
+.status-new { background-color: #d1ecf1; color: #0c5460; }
+.status-in_progress { background-color: #fff3cd; color: #856404; }
+.status-completed { background-color: #d4edda; color: #155724; }
+.status-rejected { background-color: #f8d7da; color: #721c24; }
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    text-decoration: none;
+    color: #007bff;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+
+div{
+  text-align: center;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <a href="{% url 'problem_list' %}" class="back-link">← Назад к списку заявок</a>
+
+    <div class="problem-info">
+        <h1>{{ problem.title }}</h1>
+
+        <div>
+            <span class="meta-item status-{{ problem.status }}">
+                <strong>Статус:</strong> {{ problem.get_status_display }}
+            </span>
+            <span class="meta-item">
+                <strong>Тип:</strong> {{ problem.get_problem_type_display }}
+            </span>
+            <span class="meta-item">
+                <strong>Создано:</strong> {{ problem.create_time|date:"d.m.Y H:i" }}
+            </span>
+        </div>
+
+        <p><strong>Описание:</strong></p>
+        <p>{{ problem.description|linebreaks }}</p>
+
+        <p><strong>Адрес:</strong> {{ problem.address }}</p>
+
+        {% if problem.picture %}
+            <p><strong>Фотография:</strong></p>
+            <img src="{{ problem.picture.url }}" alt="{{ problem.title }}" class="problem-image">
+        {% else %}
+            <p><strong>Фотография:</strong> не прикреплена</p>
+        {% endif %}
+
+        {% if problem.latitude and problem.longitude %}
+        <div class="map-container">
+            <h3>Местоположение на карте:</h3>
+            <div id="problem-map"></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if problem.latitude and problem.longitude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var map = L.map('problem-map').setView([{{ problem.latitude }}, {{ problem.longitude }}], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    var marker = L.marker([{{ problem.latitude }}, {{ problem.longitude }}]).addTo(map);
+    marker.bindPopup(`
+        <h4>{{ problem.title|escapejs }}</h4>
+        <p><strong>Тип:</strong> {{ problem.get_problem_type_display|escapejs }}</p>
+        <p><strong>Статус:</strong> {{ problem.get_status_display|escapejs }}</p>
+        <p><strong>Адрес:</strong> {{ problem.address|escapejs|truncatechars:50 }}</p>
+        <hr>
+        <p>{{ problem.description|escapejs|truncatechars:100 }}</p>
+    `);
+    marker.openPopup();
+    L.control.zoom({
+        position: 'topright'
+    }).addTo(map);
+    L.control.scale({
+        imperial: false,
+        metric: true
+    }).addTo(map);
+</script>
+{% endif %}
+{% endblock %}
