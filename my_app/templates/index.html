@@ -1,11 +1,239 @@
 {% extends "base.html" %}
+
+{% block title %}Главная страница{% endblock %}
+
 {% block extra_head %}
-<title>Home</title>
+<style>
+    .hero {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .hero h2 {
+        font-size: clamp(24px, 3.5vw, 34px);
+        margin: 0 0 12px;
+        line-height: 1.3;
+    }
+
+    .hero p {
+        color: var(--muted);
+        font-size: 17px;
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .hero .cta-row {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 22px;
+        flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+        padding: 11px 21px;
+        border-radius: 10px;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-weight: 700;
+        display: inline-block;
+        transition: var(--transition);
+    }
+
+    .btn-secondary:hover {
+        background: #dcd6ff;
+        color: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .stats-grid {
+        display: grid;
+        gap: 16px;
+        margin: 32px 0;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    .stat-card {
+        padding: 22px;
+        border-radius: var(--radius);
+        background: linear-gradient(135deg, var(--surface), #fafaff);
+        border: 1px solid var(--border);
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-card .icon {
+        font-size: 28px;
+        margin-bottom: 6px;
+    }
+
+    .stat-card .value {
+        font-size: 32px;
+        font-weight: 800;
+        background: linear-gradient(110deg, #6558e8, #16a6c9);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-card .label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .section-title {
+        margin: 40px 0 18px;
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .top-problems {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .top-card {
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--primary);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        animation: fadeUp .5s ease both;
+    }
+
+    .top-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .top-card h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+    }
+
+    .top-card h3 a {
+        color: var(--primary);
+    }
+
+    .top-card p {
+        color: var(--muted);
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .vote-badge {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        background: linear-gradient(110deg, #fff2d9, #fff8e6);
+        color: #946000;
+        font-weight: 700;
+        font-size: 13px;
+        border: 1px solid #f3dfb0;
+    }
+
+    .developer-info {
+        margin: 13px 0;
+        padding: 15px 18px;
+        border: 1px solid #e7e8fb;
+        border-left: 4px solid #6558e8;
+        border-radius: 10px;
+        background: linear-gradient(100deg, #f5f3ff, #f0fbff);
+        color: #424b65;
+        font-size: 16px;
+        transition: var(--transition);
+    }
+
+    .developer-info:hover {
+        transform: translateX(7px);
+        box-shadow: 0 7px 18px rgba(101,88,232,.12);
+    }
+
+    [data-theme="dark"] .developer-info {
+        background: linear-gradient(100deg, #252b3d, #1f2433);
+        border-color: var(--border);
+        color: var(--text);
+    }
+
+    [data-theme="dark"] .btn-secondary {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    @media (max-width: 600px) {
+        .hero p { font-size: 15px; }
+    }
+</style>
 {% endblock %}
+
 {% block content %}
-<h1>Это главная страница сайта,<br/>
-  здесь есть полная информация о разработчике сайта:</h1>
-<p>Имя: Владимир</p>
-<p>Фамилия: Колупаев</p>
-<p>Дата рождения: 17.06.2011</p>
+<div class="hero">
+    <h2>Карта городских проблем</h2>
+    <p>Помогите сделать наш город лучше — сообщайте о проблемах, поддерживайте важные заявки и следите за их решением</p>
+    <div class="cta-row">
+        {% if user.is_authenticated %}
+            <a href="{% url 'problem_create' %}" class="btn">Создать заявку</a>
+            <a href="{% url 'map' %}" class="btn-secondary">Открыть карту</a>
+        {% else %}
+            <a href="{% url 'registration' %}" class="btn">Начать</a>
+            <a href="{% url 'map' %}" class="btn-secondary">Посмотреть карту</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="icon">👥</div>
+        <div class="value">{{ stats.users }}</div>
+        <div class="label">Пользователей</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon">📍</div>
+        <div class="value">{{ stats.problems }}</div>
+        <div class="label">Заявок подано</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon">✅</div>
+        <div class="value">{{ stats.completed }}</div>
+        <div class="label">Решено</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon">🏆</div>
+        <div class="value">{{ stats.points }}</div>
+        <div class="label">Баллов выдано</div>
+    </div>
+</div>
+
+{% if top_problems %}
+    <h2 class="section-title">🔥 Самые поддерживаемые заявки</h2>
+    <div class="top-problems">
+        {% for problem in top_problems %}
+            <div class="top-card">
+                <h3><a href="{{ problem.get_absolute_url }}">{{ problem.title }}</a></h3>
+                <p>{{ problem.address }}</p>
+                <span class="vote-badge">👍 {{ problem.votes_total }} голосов</span>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<h2 class="section-title">👋 О разработчике</h2>
+<div class="content-card">
+    <div class="developer-info">Имя: Владимир</div>
+    <div class="developer-info">Фамилия: Колупаев</div>
+    <div class="developer-info">Дата рождения: 17.06.2011</div>
+</div>
 {% endblock %}

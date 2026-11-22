@@ -1,200 +1,140 @@
 {% extends "base.html" %}
 
+{% block title %}{% if is_edit %}Редактирование заявки{% else %}Создание заявки{% endif %}{% endblock %}
+
 {% block extra_head %}
-{{ block.super }}
-<title>Создание заявки</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  body {
-    background-color: #14111A;
-    color: #E0E0E0;
-  }
+    .form-page {
+        max-width: 900px;
+        margin: 0 auto;
+        animation: fadeUp .6s ease both;
+    }
 
-  #map {
-    height: 400px;
-    margin-bottom: 20px;
-    border: 1px solid #444;
-    border-radius: 5px;
-    background-color: #2C2730;
-  }
+    .form-page h1 {
+        text-align: center;
+        margin-bottom: 25px;
+    }
 
-  .map-container {
-    margin-bottom: 20px;
-  }
+    .map-container,
+    .problem-form {
+        padding: 25px;
+        margin-bottom: 22px;
+        border: 1px solid #e5e8f5;
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0 8px 25px rgba(70,65,160,.07);
+    }
 
-  .coordinates-info {
-    background-color: #2C2730;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    border: 1px solid #444;
-  }
+    #map {
+        width: 100%;
+        height: 400px;
+        margin-top: 18px;
+        border: 1px solid #dfe2f0;
+        border-radius: 11px;
+    }
 
-  .coordinates-info p {
-    margin: 8px 0;
-    font-size: 1.2rem;
-    color: #B0B0B0;
-  }
+    .coordinates-info {
+        padding: 14px 18px;
+        border-radius: 10px;
+        background: linear-gradient(100deg, #f2efff, #eafaff);
+    }
 
-  .coordinates-info strong {
-    color: #FFFFFF;
-  }
+    .coordinates-info p {
+        margin: 6px 0;
+        color: #59627a;
+    }
 
-  #latitude-display, #longitude-display, #address-display {
-    font-weight: bold;
-  }
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-  form {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 25px;
-    background-color: #2C2730;
-    border-radius: 8px;
-    border: 1px solid #444;
-  }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #424b65;
+        font-weight: 700;
+    }
 
-  h1 {
-    color: #FFFFFF;
-    text-align: center;
-    margin-bottom: 25px;
-  }
+    .form-group input:not([type="file"]),
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #dfe2f0;
+        border-radius: 8px;
+        background: #fafaff;
+        color: #30394e;
+        font-size: 15px;
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
 
-  h3 {
-    color: #FFFFFF;
-    margin-bottom: 10px;
-  }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #7666e8;
+        box-shadow: 0 0 0 3px rgba(101,88,232,.12);
+    }
 
-  p {
-    color: #B0B0B0;
-    margin-bottom: 15px;
-  }
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
 
-  .form-group {
-    margin-bottom: 20px;
-  }
+    .form-group input[type="file"] {
+        max-width: 100%;
+    }
 
-  .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    color: #FFFFFF;
-  }
+    small {
+        display: block;
+        margin-top: 6px;
+        color: #81899b;
+    }
 
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #555;
-    border-radius: 6px;
-    background-color: #3A3540;
-    color: #E0E0E0;
-    font-size: 16px;
-    box-sizing: border-box;
-  }
+    .error {
+        margin-top: 7px;
+        padding: 9px 12px;
+        border-radius: 7px;
+        background: #fff0f0;
+        color: #a33f3f;
+        font-size: 14px;
+    }
 
-  .form-group input:focus,
-  .form-group textarea:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-  }
+    .form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #e8eaf2;
+    }
 
-  .btn {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-  }
+    .btn-secondary {
+        display: inline-block;
+        padding: 11px 20px;
+        border-radius: 9px;
+        background: #e9ecf4;
+        color: #48536a;
+        font-weight: 700;
+        transition: background .2s ease, transform .2s ease;
+    }
 
-  .btn-primary {
-    background-color: #007bff;
-    color: white;
-  }
+    .btn-secondary:hover {
+        background: #dce1ed;
+        color: #30394e;
+        transform: translateY(-2px);
+    }
 
-  .btn-primary:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .btn-secondary {
-    background-color: #6c757d;
-    color: white;
-    margin-left: 10px;
-  }
-
-  .btn-secondary:hover {
-    background-color: #545b62;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  small {
-    color: #888;
-    font-size: 0.9em;
-    display: block;
-    margin-top: 5px;
-  }
-
-  .error {
-    color: #ff6b6b;
-    margin-top: 5px;
-    font-size: 0.9em;
-    background-color: rgba(255, 107, 107, 0.1);
-    padding: 8px;
-    border-radius: 4px;
-    border-left: 3px solid #ff6b6b;
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: flex-start;
-    gap: 15px;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #444;
-  }
-
-  select option {
-    background-color: #3A3540;
-    color: #E0E0E0;
-  }
-
-  input[type="file"] {
-    padding: 10px;
-    background-color: #3A3540;
-    border: 1px solid #555;
-    border-radius: 6px;
-    color: #B0B0B0;
-  }
-
-  input[type="file"]::file-selector-button {
-    background-color: #444;
-    color: #E0E0E0;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    margin-right: 10px;
-    cursor: pointer;
-  }
-
-  input[type="file"]::file-selector-button:hover {
-    background-color: #555;
-  }
+    @media (max-width: 600px) {
+        .map-container, .problem-form { padding: 16px; }
+        #map { height: 330px; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div>
-    <h1>Создание новой заявки</h1>
+<div class="form-page">
+    <h1>{% if is_edit %}Редактирование заявки{% else %}Создание новой заявки{% endif %}</h1>
 
     <div class="map-container">
         <h3>Укажите местоположение проблемы на карте:</h3>
@@ -210,11 +150,11 @@
         <div id="map"></div>
     </div>
 
-    <form method="post" enctype="multipart/form-data">
+    <form class="problem-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="form-group">
-            <label>Название проблемы:</label>
+            <label for="{{ form.title.id_for_label }}">Название проблемы:</label>
             {{ form.title }}
             {% if form.title.errors %}
                 <div class="error">{{ form.title.errors }}</div>
@@ -222,7 +162,7 @@
         </div>
 
         <div class="form-group">
-            <label>Описание:</label>
+            <label for="{{ form.description.id_for_label }}">Описание:</label>
             {{ form.description }}
             {% if form.description.errors %}
                 <div class="error">{{ form.description.errors }}</div>
@@ -230,7 +170,7 @@
         </div>
 
         <div class="form-group">
-            <label>Тип проблемы:</label>
+            <label for="{{ form.problem_type.id_for_label }}">Тип проблемы:</label>
             {{ form.problem_type }}
             {% if form.problem_type.errors %}
                 <div class="error">{{ form.problem_type.errors }}</div>
@@ -238,7 +178,7 @@
         </div>
 
         <div class="form-group">
-            <label>Адрес:</label>
+            <label for="{{ form.address.id_for_label }}">Адрес:</label>
             {{ form.address }}
             <small>Адрес будет автоматически определен по выбранной точке на карте</small>
             {% if form.address.errors %}
@@ -247,7 +187,7 @@
         </div>
 
         <div class="form-group">
-            <label>Фотография проблемы (необязательно):</label>
+            <label for="{{ form.picture.id_for_label }}">Фотография проблемы (необязательно):</label>
             {{ form.picture }}
             {% if form.picture.errors %}
                 <div class="error">{{ form.picture.errors }}</div>
@@ -260,99 +200,109 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Создать заявку</button>
-            <a href="{% url 'problem_list' %}" class="btn btn-secondary">Отмена</a>
+            <button type="submit">{% if is_edit %}Сохранить изменения{% else %}Создать заявку{% endif %}</button>
+            {% if is_edit %}
+                <a href="{% url 'problem_detail' problem.pk %}" class="btn-secondary">Отмена</a>
+            {% else %}
+                <a href="{% url 'problem_list' %}" class="btn-secondary">Отмена</a>
+            {% endif %}
         </div>
 
         {% if form.non_field_errors %}
             <div class="error">
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
+                {{ form.non_field_errors }}
             </div>
         {% endif %}
     </form>
 </div>
 
+<script src="https://api-maps.yandex.ru/2.1/?apikey={{ YANDEX_MAPS_API_KEY }}&lang=ru_RU"
+        type="text/javascript"></script>
 
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    var map = L.map('map').setView([55.751244, 37.618423], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(map);
-    var marker = null;
-    var latitudeField = document.getElementById('id_latitude');
-    var longitudeField = document.getElementById('id_longitude');
-    var latitudeDisplay = document.getElementById('latitude-display');
-    var longitudeDisplay = document.getElementById('longitude-display');
-    var addressDisplay = document.getElementById('address-display');
-    var addressField = document.getElementById('id_address');
-    if (!latitudeField || !longitudeField) {
-        console.error('Не найдены поля для координат');
-        latitudeField = document.createElement('input');
-        longitudeField = document.createElement('input');
-        latitudeField.type = 'hidden';
-        longitudeField.type = 'hidden';
-        latitudeField.id = 'id_latitude';
-        longitudeField.id = 'id_longitude';
-        document.querySelector('form').appendChild(latitudeField);
-        document.querySelector('form').appendChild(longitudeField);
-    }
-    function updateCoordinates(lat, lng) {
-        latitudeField.value = lat;
-        longitudeField.value = lng;
-        latitudeDisplay.textContent = lat.toFixed(6);
-        longitudeDisplay.textContent = lng.toFixed(6);
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.display_name) {
-                    addressDisplay.textContent = data.display_name;
+    ymaps.ready(function () {
+        const map = new ymaps.Map("map", {
+            center: [55.751244, 37.618423],
+            zoom: 12,
+            controls: ["zoomControl", "fullscreenControl", "typeSelector"]
+        });
+
+        const latitudeField = document.getElementById("id_latitude");
+        const longitudeField = document.getElementById("id_longitude");
+        const addressField = document.getElementById("id_address");
+
+        const latitudeDisplay = document.getElementById("latitude-display");
+        const longitudeDisplay = document.getElementById("longitude-display");
+        const addressDisplay = document.getElementById("address-display");
+
+        let marker = null;
+
+        function updateCoordinates(coords) {
+            const lat = coords[0];
+            const lng = coords[1];
+
+            latitudeField.value = lat.toFixed(7);
+            longitudeField.value = lng.toFixed(7);
+
+            latitudeDisplay.textContent = lat.toFixed(6);
+            longitudeDisplay.textContent = lng.toFixed(6);
+            addressDisplay.textContent = "Определение адреса...";
+
+            ymaps.geocode(coords, { results: 1 }).then(function (res) {
+                const firstGeoObject = res.geoObjects.get(0);
+
+                if (firstGeoObject) {
+                    const address = firstGeoObject.getAddressLine();
+                    addressDisplay.textContent = address;
+
                     if (addressField) {
-                        addressField.value = data.display_name;
+                        addressField.value = address;
                     }
+                } else {
+                    addressDisplay.textContent = "Адрес не определен";
                 }
-            })
-            .catch(error => {
-                console.error('Ошибка получения адреса:', error);
-                addressDisplay.textContent = 'Адрес не определен';
+            }).catch(function () {
+                addressDisplay.textContent = "Не удалось определить адрес";
             });
-    }
-    map.on('click', function(e) {
-        var lat = e.latlng.lat;
-        var lng = e.latlng.lng;
-        if (marker) {
-            map.removeLayer(marker);
         }
-        marker = L.marker([lat, lng], {
-            draggable: true
-        }).addTo(map);
-        updateCoordinates(lat, lng);
-        marker.on('dragend', function(e) {
-            var newLat = marker.getLatLng().lat;
-            var newLng = marker.getLatLng().lng;
-            updateCoordinates(newLat, newLng);
+
+        function placeMarker(coords) {
+            if (marker) {
+                map.geoObjects.remove(marker);
+            }
+
+            marker = new ymaps.Placemark(
+                coords,
+                { balloonContent: "Местоположение проблемы" },
+                {
+                    draggable: true,
+                    preset: "islands#violetDotIcon"
+                }
+            );
+
+            map.geoObjects.add(marker);
+            marker.events.add("dragend", function () {
+                updateCoordinates(marker.geometry.getCoordinates());
+            });
+
+            updateCoordinates(coords);
+        }
+
+        map.events.add("click", function (event) {
+            placeMarker(event.get("coords"));
         });
+
+        if (latitudeField.value && longitudeField.value) {
+            const savedCoords = [
+                parseFloat(latitudeField.value),
+                parseFloat(longitudeField.value)
+            ];
+
+            if (savedCoords.every(Number.isFinite)) {
+                placeMarker(savedCoords);
+                map.setCenter(savedCoords, 15);
+            }
+        }
     });
-    if (latitudeField && longitudeField && latitudeField.value && longitudeField.value) {
-        var lat = parseFloat(latitudeField.value);
-        var lng = parseFloat(longitudeField.value);
-        marker = L.marker([lat, lng], {
-            draggable: true
-        }).addTo(map);
-        map.setView([lat, lng], 15);
-        updateCoordinates(lat, lng);
-        marker.on('dragend', function(e) {
-            var newLat = marker.getLatLng().lat;
-            var newLng = marker.getLatLng().lng;
-            updateCoordinates(newLat, newLng);
-        });
-    }
-    L.control.zoom({
-        position: 'topright'
-    }).addTo(map);
 </script>
 {% endblock %}

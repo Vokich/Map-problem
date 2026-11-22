@@ -1,62 +1,440 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Проблемы городов{% endblock %}</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wdth,wght@0,91.8,655;1,91.8,655&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet">
-    <style>
-      html{
-        display: grid;
-        text-align: center;
-        color: white;
-        background-color: #14111A;
-        font-family: "Open Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 655;
-        font-style: normal;
-        font-variation-settings:
-          "wdth" 91.8;
 
-      }
-      a{
-        text-decoration: none;
-        color: #007bff;
-      }
-      .panel a{
-        margin-right: 1rem;
-      }
+    <style>
+        :root {
+            --primary: #6558e8;
+            --primary-dark: #5143d0;
+            --primary-light: #eeedff;
+            --secondary: #16a6c9;
+            --success: #187647;
+            --success-bg: #e1f7eb;
+            --danger: #a53d3d;
+            --danger-bg: #ffe6e6;
+            --warning: #946000;
+            --warning-bg: #fff2d9;
+            --text: #252b42;
+            --muted: #727b91;
+            --surface: #ffffff;
+            --background: #f3f5ff;
+            --border: #e5e8f5;
+            --shadow-sm: 0 2px 8px rgba(50, 60, 120, .06);
+            --shadow-md: 0 8px 24px rgba(50, 60, 120, .08);
+            --shadow-lg: 0 16px 40px rgba(50, 60, 120, .12);
+            --radius: 14px;
+            --transition: .25s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #8870f2;
+            --primary-dark: #a094f7;
+            --primary-light: #2a2f48;
+            --secondary: #29b8d9;
+            --text: #e8ecf5;
+            --muted: #9aa3b8;
+            --surface: #1f2433;
+            --background: #151827;
+            --border: #2a3145;
+            --success-bg: #1b3326;
+            --danger-bg: #3d1f1f;
+            --warning-bg: #3d2f14;
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 5% 5%, rgba(101, 88, 232, .10), transparent 28%),
+                radial-gradient(circle at 95% 30%, rgba(22, 166, 201, .10), transparent 25%),
+                var(--background);
+            color: var(--text);
+            font-family: "Open Sans", sans-serif;
+            line-height: 1.6;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+            opacity: 0.6;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+        }
+
+        .header {
+            position: relative;
+            overflow: hidden;
+            padding: 28px 20px 24px;
+            color: white;
+            background: linear-gradient(115deg, #5143d0, #7659ed 55%, #16a6c9);
+            box-shadow: 0 8px 28px rgba(81, 67, 208, .22);
+        }
+
+        [data-theme="dark"] .header {
+            background: linear-gradient(115deg, #3a2fa8, #5540c9 55%, #0e7d99);
+        }
+
+        .header::before,
+        .header::after {
+            position: absolute;
+            content: "";
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .header::before {
+            width: 300px;
+            height: 300px;
+            top: -210px;
+            right: 8%;
+        }
+
+        .header::after {
+            width: 220px;
+            height: 220px;
+            bottom: -190px;
+            left: 8%;
+        }
+
+        .header-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 2;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            border: 1px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            background: rgba(255,255,255,.15);
+            color: white;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: none;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,.3);
+            transform: rotate(20deg) scale(1.08);
+        }
+
+        .site-title {
+            margin: 0 0 20px;
+            color: white;
+            font-size: clamp(22px, 3vw, 30px);
+            font-weight: 800;
+            text-align: center;
+            animation: slideDown .7s ease both;
+            letter-spacing: -0.02em;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 9px;
+        }
+
+        .navigation a {
+            padding: 9px 16px;
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 10px;
+            color: white;
+            background: rgba(255,255,255,.12);
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .navigation a:hover {
+            color: white;
+            background: rgba(255,255,255,.25);
+            box-shadow: 0 5px 18px rgba(30,20,100,.18);
+            transform: translateY(-3px);
+        }
+
+        .user-greeting {
+            margin: 15px 0 0;
+            color: rgba(255,255,255,.9);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .messages-container {
+            max-width: 1200px;
+            margin: 18px auto 0;
+            padding: 0 20px;
+        }
+
+        .message {
+            padding: 12px 18px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            animation: fadeUp .4s ease both;
+        }
+
+        .message-success { background: var(--success-bg); color: var(--success); border-color: #bce8ce; }
+        .message-error   { background: var(--danger-bg); color: var(--danger); border-color: #f0caca; }
+        .message-info    { background: #e5f2ff; color: #2365a5; border-color: #c9e3ff; }
+        .message-warning { background: var(--warning-bg); color: var(--warning); border-color: #f3dfb0; }
+
+        .main-content {
+            width: calc(100% - 36px);
+            max-width: 1200px;
+            min-height: 65vh;
+            margin: 38px auto;
+            animation: fadeUp .65s ease both;
+        }
+
+        .content-card {
+            padding: 30px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            box-shadow: var(--shadow-md);
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--text);
+            letter-spacing: -0.015em;
+        }
+
+        button,
+        .btn {
+            display: inline-block;
+            padding: 11px 21px;
+            border: 0;
+            border-radius: 10px;
+            color: white;
+            background: linear-gradient(110deg, var(--primary), #8870f2);
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 14px rgba(101,88,232,.2);
+            transition: var(--transition);
+        }
+
+        button:hover,
+        .btn:hover {
+            color: white;
+            filter: brightness(1.06);
+            box-shadow: 0 8px 22px rgba(101,88,232,.35);
+            transform: translateY(-2px);
+        }
+
+        button:active,
+        .btn:active {
+            transform: translateY(0) scale(.98);
+        }
+
+        input, textarea, select {
+            font-family: inherit;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding: 22px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            background: var(--surface);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        [data-theme="dark"] .content-card,
+        [data-theme="dark"] .auth-container,
+        [data-theme="dark"] .problem-info,
+        [data-theme="dark"] .map-card,
+        [data-theme="dark"] .dashboard-card,
+        [data-theme="dark"] .confirm-card,
+        [data-theme="dark"] .home-card {
+            background: var(--surface);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        [data-theme="dark"] input,
+        [data-theme="dark"] textarea,
+        [data-theme="dark"] select {
+            background: #252b3d;
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        [data-theme="dark"] .meta-item,
+        [data-theme="dark"] .coordinates-info,
+        [data-theme="dark"] .description-block,
+        [data-theme="dark"] .filters,
+        [data-theme="dark"] .empty-message,
+        [data-theme="dark"] .problem-item {
+            background: #252b3d;
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 22px 12px; }
+            .navigation { gap: 6px; }
+            .navigation a { padding: 8px 10px; font-size: 12px; }
+            .main-content { width: calc(100% - 20px); margin: 22px auto; }
+            .content-card { padding: 18px; }
+            .theme-toggle { width: 36px; height: 36px; font-size: 16px; top: 12px; right: 12px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
+        }
     </style>
+
     {% block extra_head %}{% endblock %}
-    <h1>Добро пожаловать на сайт - Проблемы городов!</h1>
 </head>
+
 <body>
-    <div>
-        <a href="{% url 'index' %}">Главная страница</a>
-        {% if user.is_authenticated %}
-            <p>Привет, {{ user.username }}!</p>
-            <div class="panel">
-              <h3>
-                <a href="{% url 'map' %}">Карта проблем</a>
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+        <div class="message message-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<header class="header">
+    <div class="header-inner">
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
+            🌙
+        </button>
+
+        <h1 class="site-title">
+            Добро пожаловать на сайт - Карта проблем!
+        </h1>
+
+        <nav class="navigation">
+            <a href="{% url 'index' %}">Главная</a>
+            <a href="{% url 'map' %}">Карта</a>
+            <a href="{% url 'problem_list' %}">Все заявки</a>
+            <a href="{% url 'leaderboard' %}">🏆 Лидеры</a>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'my_problems' %}">Мои заявки</a>
+                <a href="{% url 'problem_create' %}">Создать</a>
+                {% if user.is_staff %}
+                    <a href="{% url 'admin_dashboard' %}">Админ-панель</a>
+                {% endif %}
                 <a href="{% url 'logout' %}">Выйти</a>
-                <a href="{% url 'problem_create' %}">Создать заявку о проблеме</a>
-                <a href="{% url 'problem_list' %}">Заявки</a>
-            </h3>
-            </div>
-        {% else %}
-            <p>
-                <a href="{% url 'login' %}">Войти </a>
-                или
-                <a href="{% url 'registration' %}">Зарегистрироваться</a>
-            </p>
+            {% else %}
+                <a href="{% url 'login' %}">Войти</a>
+                <a href="{% url 'registration' %}">Регистрация</a>
+            {% endif %}
+        </nav>
+
+        {% if user.is_authenticated %}
+            <p class="user-greeting">Привет, {{ user.username }}!</p>
         {% endif %}
     </div>
-    <div>
-      {% block content %} {% endblock %}
-    </div>
-</body>
-<footer>
+</header>
 
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    Сайт «Проблемы городов» • {{ now|date:"Y" }}
 </footer>
+
+<script>
+    (function () {
+        const html = document.documentElement;
+        const toggle = document.getElementById('theme-toggle');
+        const saved = localStorage.getItem('theme');
+
+        function applyTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            if (toggle) toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        if (saved) {
+            applyTheme(saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            applyTheme('dark');
+        }
+
+        if (toggle) {
+            toggle.addEventListener('click', function () {
+                const current = html.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                applyTheme(next);
+                localStorage.setItem('theme', next);
+            });
+        }
+    })();
+</script>
+</body>
 </html>

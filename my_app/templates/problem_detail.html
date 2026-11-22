@@ -1,90 +1,418 @@
 {% extends "base.html" %}
 
+{% block title %}{{ problem.title }}{% endblock %}
+
 {% block extra_head %}
-{{ block.super }}
-<title>{{ problem.title }}</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  #problem-map {
-      height: 400px;
-      margin: 20px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+    .problem-info {
+        padding: 30px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-md);
+        animation: fadeUp .6s ease both;
     }
 
-.problem-info {
-    margin-bottom: 20px;
-    padding: 20px;
-    background-color: #2C2730;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+    .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        padding: 9px 15px;
+        border-radius: 8px;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-weight: 700;
+        transition: var(--transition);
+    }
 
-.problem-image {
-    max-width: 100%;
-    height: auto;
-    margin: 10px 0;
-    border-radius: 5px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
+    .back-link:hover {
+        background: #dcd6ff;
+        color: var(--primary-dark);
+        transform: translateX(-4px);
+    }
 
-.problem-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 15px;
-}
+    .problem-info h1 {
+        margin-top: 0;
+        font-size: clamp(23px, 3vw, 31px);
+    }
 
-.meta-item {
-    background-color: #24212B;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 0.9em;
-}
+    .problem-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 20px 0;
+    }
 
-.status-new { background-color: #d1ecf1; color: #0c5460; }
-.status-in_progress { background-color: #fff3cd; color: #856404; }
-.status-completed { background-color: #d4edda; color: #155724; }
-.status-rejected { background-color: #f8d7da; color: #721c24; }
+    .meta-item {
+        display: inline-block;
+        padding: 8px 14px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #f7f7ff;
+        color: var(--text);
+        font-size: 14px;
+    }
 
-.back-link {
-    display: inline-block;
-    margin-bottom: 20px;
-    text-decoration: none;
-    color: #007bff;
-}
-.back-link:hover {
-    text-decoration: underline;
-}
+    .status-new { border-color: #c9e3ff; background: #e5f2ff; color: #2365a5; }
+    .status-in_progress { border-color: #f3dfb0; background: #fff2d9; color: #946000; }
+    .status-completed { border-color: #bce8ce; background: #e1f7eb; color: #187647; }
+    .status-rejected { border-color: #f0caca; background: #ffe6e6; color: #a53d3d; }
 
-div{
-  text-align: center;
-}
+    .description-block {
+        margin-top: 25px;
+        padding: 18px;
+        border-radius: 10px;
+        background: #f8f8ff;
+        color: var(--text);
+    }
 
+    .problem-image {
+        display: block;
+        max-width: 100%;
+        max-height: 500px;
+        margin: 15px auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 22px rgba(40,40,100,.12);
+        transition: var(--transition);
+    }
+
+    .problem-image:hover {
+        transform: scale(1.015);
+    }
+
+    #problem-map {
+        width: 100%;
+        height: 400px;
+        margin-top: 15px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .map-container {
+        margin-top: 28px;
+    }
+
+    .qr-block {
+        margin-top: 28px;
+        text-align: center;
+    }
+
+    .qr-block img {
+        display: inline-block;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+    }
+
+    .vote-block {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin: 22px 0;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: linear-gradient(120deg, #f3f0ff, #eafaff);
+    }
+
+    .vote-count {
+        font-size: 36px;
+        font-weight: 800;
+        background: linear-gradient(110deg, #6558e8, #16a6c9);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+    }
+
+    .vote-info {
+        flex: 1;
+    }
+
+    .vote-info p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    .vote-btn {
+        padding: 11px 20px;
+        border-radius: 10px;
+        border: 2px solid var(--primary);
+        background: white;
+        color: var(--primary);
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+        transition: var(--transition);
+        box-shadow: none;
+    }
+
+    .vote-btn:hover {
+        background: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 14px rgba(101,88,232,.2);
+    }
+
+    .vote-btn.voted {
+        background: linear-gradient(110deg, #6558e8, #8870f2);
+        color: white;
+        border-color: transparent;
+    }
+
+    .action-buttons {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .btn-danger {
+        padding: 11px 20px;
+        border-radius: 10px;
+        background: var(--danger-bg);
+        color: var(--danger);
+        font-weight: 700;
+        display: inline-block;
+        transition: var(--transition);
+    }
+
+    .btn-danger:hover {
+        background: #ffcccc;
+        color: #8b2626;
+    }
+
+    .status-change-block {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+
+    .status-change-block p {
+        margin-bottom: 12px;
+    }
+
+    .status-change-block select {
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-size: 15px;
+    }
+
+    .comments-section {
+        margin-top: 32px;
+        padding: 26px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-md);
+    }
+
+    .comments-section h2 {
+        margin-top: 0;
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .comments-count {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 20px;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .comment-form {
+        margin-bottom: 22px;
+    }
+
+    .comment-form textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fafaff;
+        color: var(--text);
+        font-size: 15px;
+        font-family: inherit;
+        resize: vertical;
+        transition: var(--transition);
+        box-sizing: border-box;
+    }
+
+    .comment-form textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(101,88,232,.13);
+    }
+
+    .comment-form .submit-row {
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .comment {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fafaff;
+        animation: fadeUp .4s ease both;
+    }
+
+    .comment-avatar {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6558e8, #16a6c9);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 17px;
+    }
+
+    .comment-body {
+        flex: 1;
+    }
+
+    .comment-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .comment-author {
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .comment-date {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .comment-text {
+        color: var(--text);
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    .comment-delete {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        box-shadow: none;
+        transition: var(--transition);
+    }
+
+    .comment-delete:hover {
+        background: var(--danger-bg);
+        color: var(--danger);
+        transform: none;
+    }
+
+    .no-comments {
+        color: var(--muted);
+        font-size: 14px;
+        font-style: italic;
+    }
+
+    .login-to-comment {
+        padding: 16px;
+        margin-bottom: 22px;
+        border-radius: 10px;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-size: 14px;
+        text-align: center;
+    }
+
+    [data-theme="dark"] .vote-block {
+        background: linear-gradient(120deg, #252b3d, #1f2433);
+    }
+
+    [data-theme="dark"] .vote-btn {
+        background: var(--surface);
+        color: var(--primary);
+    }
+
+    [data-theme="dark"] .comment,
+    [data-theme="dark"] .comment-form textarea {
+        background: #252b3d;
+        border-color: var(--border);
+    }
+
+    @media (max-width: 600px) {
+        .problem-info { padding: 18px; }
+        #problem-map { height: 330px; }
+        .comments-section { padding: 18px; }
+        .vote-block { flex-direction: column; text-align: center; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
-    <a href="{% url 'problem_list' %}" class="back-link">← Назад к списку заявок</a>
+    <a href="{% url 'problem_list' %}" class="back-link">← Назад к списку</a>
 
     <div class="problem-info">
         <h1>{{ problem.title }}</h1>
 
-        <div>
+        <div class="problem-meta">
             <span class="meta-item status-{{ problem.status }}">
                 <strong>Статус:</strong> {{ problem.get_status_display }}
             </span>
-            <span class="meta-item">
-                <strong>Тип:</strong> {{ problem.get_problem_type_display }}
-            </span>
-            <span class="meta-item">
-                <strong>Создано:</strong> {{ problem.create_time|date:"d.m.Y H:i" }}
-            </span>
+            <span class="meta-item"><strong>Тип:</strong> {{ problem.get_problem_type_display }}</span>
+            <span class="meta-item"><strong>Создано:</strong> {{ problem.create_time|date:"d.m.Y H:i" }}</span>
+            {% if problem.author %}
+                <span class="meta-item"><strong>Автор:</strong> {{ problem.author.username }}</span>
+            {% endif %}
         </div>
 
-        <p><strong>Описание:</strong></p>
-        <p>{{ problem.description|linebreaks }}</p>
+        <div class="vote-block">
+            <div class="vote-count">{{ problem.votes_count }}</div>
+            <div class="vote-info">
+                <strong>{% if problem.votes_count == 0 %}Пока никто не поддержал{% else %}голосов за решение{% endif %}</strong>
+                <p>Поддержите заявку — так администрация увидит, что она важна горожанам</p>
+            </div>
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'problem_vote' problem.pk %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="vote-btn {% if user_voted %}voted{% endif %}">
+                        {% if user_voted %}✓ Вы поддержали{% else %}👍 Поддержать{% endif %}
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="vote-btn">Войти, чтобы поддержать</a>
+            {% endif %}
+        </div>
+
+        <div class="description-block">
+            <p><strong>Описание:</strong></p>
+            <div>{{ problem.description|linebreaks }}</div>
+        </div>
 
         <p><strong>Адрес:</strong> {{ problem.address }}</p>
 
@@ -96,39 +424,112 @@ div{
         {% endif %}
 
         {% if problem.latitude and problem.longitude %}
-        <div class="map-container">
-            <h3>Местоположение на карте:</h3>
-            <div id="problem-map"></div>
-        </div>
+            <div class="map-container">
+                <h3>Местоположение на карте:</h3>
+                <div id="problem-map"></div>
+            </div>
         {% endif %}
+
+        <div class="qr-block">
+            <h3>QR-код</h3>
+            <p style="color:var(--muted); font-size:14px; margin-bottom:12px;">
+                Отсканируйте, чтобы открыть заявку на телефоне
+            </p>
+            <img src="{% url 'problem_qr' problem.pk %}" alt="QR-код заявки" width="180" height="180">
+        </div>
+
+        {% if can_edit %}
+            <div class="action-buttons">
+                <a href="{% url 'problem_edit' problem.pk %}" class="btn">Редактировать</a>
+                <a href="{% url 'problem_delete' problem.pk %}" class="btn-danger">Удалить</a>
+            </div>
+        {% endif %}
+
+        {% if status_form %}
+            <div class="status-change-block">
+                <h3>Смена статуса (для модераторов)</h3>
+                <form method="post" action="{% url 'problem_change_status' problem.pk %}">
+                    {% csrf_token %}
+                    {{ status_form.as_p }}
+                    <button type="submit">Сохранить статус</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="comments-section">
+        <h2>💬 Комментарии <span class="comments-count">{{ comments|length }}</span></h2>
+
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'comment_add' problem.pk %}" class="comment-form">
+                {% csrf_token %}
+                {{ comment_form.text }}
+                <div class="submit-row">
+                    <button type="submit">Отправить</button>
+                </div>
+            </form>
+        {% else %}
+            <div class="login-to-comment">
+                <a href="{% url 'login' %}">Войдите</a>, чтобы оставить комментарий
+            </div>
+        {% endif %}
+
+        {% for comment in comments %}
+            <div class="comment">
+                <div class="comment-avatar">{{ comment.author.username|first|upper }}</div>
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <span class="comment-author">{{ comment.author.username }}</span>
+                        <span class="comment-date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="comment-text">{{ comment.text }}</div>
+                </div>
+                {% if user.is_authenticated and user == comment.author or user.is_staff %}
+                    <form method="post" action="{% url 'comment_delete' comment.pk %}" style="margin:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="comment-delete" title="Удалить">✕</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p class="no-comments">Пока нет комментариев. Будьте первым!</p>
+        {% endfor %}
     </div>
 </div>
 
 {% if problem.latitude and problem.longitude %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://api-maps.yandex.ru/2.1/?apikey={{ YANDEX_MAPS_API_KEY }}&lang=ru_RU"
+        type="text/javascript"></script>
 <script>
-    var map = L.map('problem-map').setView([{{ problem.latitude }}, {{ problem.longitude }}], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(map);
-    var marker = L.marker([{{ problem.latitude }}, {{ problem.longitude }}]).addTo(map);
-    marker.bindPopup(`
-        <h4>{{ problem.title|escapejs }}</h4>
-        <p><strong>Тип:</strong> {{ problem.get_problem_type_display|escapejs }}</p>
-        <p><strong>Статус:</strong> {{ problem.get_status_display|escapejs }}</p>
-        <p><strong>Адрес:</strong> {{ problem.address|escapejs|truncatechars:50 }}</p>
-        <hr>
-        <p>{{ problem.description|escapejs|truncatechars:100 }}</p>
-    `);
-    marker.openPopup();
-    L.control.zoom({
-        position: 'topright'
-    }).addTo(map);
-    L.control.scale({
-        imperial: false,
-        metric: true
-    }).addTo(map);
+    ymaps.ready(function () {
+        const coords = [
+            Number("{{ problem.latitude|escapejs }}".replace(",", ".")),
+            Number("{{ problem.longitude|escapejs }}".replace(",", "."))
+        ];
+
+        if (!coords.every(Number.isFinite)) return;
+
+        const map = new ymaps.Map("problem-map", {
+            center: coords,
+            zoom: 15,
+            controls: ["zoomControl", "fullscreenControl", "typeSelector"]
+        });
+
+        const marker = new ymaps.Placemark(
+            coords,
+            {
+                balloonContentHeader: "{{ problem.title|escapejs }}",
+                balloonContentBody:
+                    "<p><strong>Тип:</strong> {{ problem.get_problem_type_display|escapejs }}</p>" +
+                    "<p><strong>Статус:</strong> {{ problem.get_status_display|escapejs }}</p>" +
+                    "<p><strong>Адрес:</strong> {{ problem.address|escapejs|truncatechars:50 }}</p>"
+            },
+            { preset: "islands#violetCircleDotIcon" }
+        );
+
+        map.geoObjects.add(marker);
+        marker.balloon.open();
+    });
 </script>
 {% endif %}
 {% endblock %}
