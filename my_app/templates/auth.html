@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Вход / Регистрация{% endblock %}
+
+{% block extra_head %}
+<style>
+    .auth-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 20px;
+    }
+
+    .auth-box {
+        width: 100%;
+        max-width: 460px;
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 32px;
+        box-shadow: var(--shadow);
+    }
+
+    .auth-tabs {
+        display: flex;
+        gap: 6px;
+        background: var(--bg);
+        padding: 5px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        margin-bottom: 26px;
+    }
+
+    .auth-tab {
+        flex: 1;
+        padding: 10px;
+        text-align: center;
+        border-radius: 7px;
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all .2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .auth-tab.active {
+        background: var(--yellow);
+        color: var(--text);
+        box-shadow: 2px 2px 0 var(--border);
+    }
+
+    .auth-title {
+        font-size: 28px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+
+    .auth-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-bottom: 22px;
+        font-weight: 500;
+    }
+
+    .btn-auth {
+        width: 100%;
+        padding: 13px;
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    .forgot-link {
+        display: block;
+        text-align: center;
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .forgot-link:hover { color: var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-box reveal-zoom">
+        <div class="auth-tabs">
+            <a href="?tab=login" class="auth-tab {% if not is_register %}active{% endif %}">Вход</a>
+            <a href="?tab=register" class="auth-tab {% if is_register %}active{% endif %}">Регистрация</a>
+        </div>
+
+        {% if not is_register %}
+            <h2 class="auth-title">С возвращением</h2>
+            <p class="auth-subtitle">Продолжай делать город лучше</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div style="margin-bottom: 16px;">
+                    <label>Логин</label>
+                    {{ login_form.username }}
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label>Пароль</label>
+                    {{ login_form.password }}
+                </div>
+                <button type="submit" name="login_submit" class="btn btn-primary btn-auth">Войти</button>
+            </form>
+
+            <a href="{% url 'password_reset' %}" class="forgot-link">Забыли пароль?</a>
+        {% else %}
+            <h2 class="auth-title">Новый житель</h2>
+            <p class="auth-subtitle">Присоединяйся к активным горожанам</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div style="margin-bottom: 14px;">
+                    <label>Логин</label>
+                    {{ reg_form.username }}
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label>Email</label>
+                    {{ reg_form.email }}
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label>Пароль</label>
+                    {{ reg_form.password }}
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label>Повтори пароль</label>
+                    {{ reg_form.password_confirm }}
+                </div>
+                <button type="submit" name="register_submit" class="btn btn-primary btn-auth">Зарегистрироваться</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

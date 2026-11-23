@@ -1,269 +1,75 @@
 {% extends "base.html" %}
-
 {% block title %}Лидеры{% endblock %}
 
 {% block extra_head %}
 <style>
-    .lb-header {
-        text-align: center;
-        margin-bottom: 25px;
-    }
-
-    .lb-header h1 {
-        font-size: clamp(24px, 3.5vw, 32px);
-        margin: 0 0 8px;
-    }
-
-    .lb-header p {
-        color: #727b91;
-    }
-
-    .my-card {
-        padding: 22px;
-        margin-bottom: 22px;
-        border: 1px solid #e5e8f5;
-        border-radius: 14px;
-        background: linear-gradient(120deg, #f3f0ff, #eafaff);
-    }
-
-    .my-card h2 {
-        margin: 0 0 12px;
-        font-size: 20px;
-    }
-
-    .level-bar-wrap {
-        margin: 12px 0 18px;
-        height: 14px;
-        background: rgba(101,88,232,0.15);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    .level-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #6558e8, #16a6c9);
-        transition: width .6s ease;
-    }
-
-    .achievements {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        margin-top: 15px;
-    }
-
-    .ach {
-        display: flex;
-        gap: 12px;
-        padding: 12px;
-        border: 1px solid #e5e8f5;
-        border-radius: 10px;
-        background: #fafaff;
-        opacity: 0.6;
-        transition: opacity .2s, transform .2s;
-    }
-
-    .ach.unlocked {
-        opacity: 1;
-        background: #fff8e6;
-        border-color: #f3dfb0;
-    }
-
-    .ach:hover {
-        transform: translateY(-2px);
-    }
-
-    .ach-icon {
-        font-size: 26px;
-        flex-shrink: 0;
-        width: 36px;
-        text-align: center;
-    }
-
-    .ach-name {
-        font-weight: 700;
-        color: #424b65;
-        font-size: 14px;
-    }
-
-    .ach-desc {
-        color: #727b91;
-        font-size: 12px;
-    }
-
-    .table-lb {
-        width: 100%;
-        border-collapse: collapse;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 5px 20px rgba(50,60,120,.06);
-    }
-
-    .table-lb th,
-    .table-lb td {
-        padding: 13px 14px;
-        text-align: left;
-        background: white;
-        border-bottom: 1px solid #eef0f7;
-    }
-
-    .table-lb th {
-        background: #f3f5ff;
-        color: #424b65;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-    }
-
-    .table-lb tr:hover td {
-        background: #fafaff;
-    }
-
-    .rank {
-        display: inline-block;
-        min-width: 26px;
-        padding: 3px 9px;
-        border-radius: 20px;
-        background: #eef0f7;
-        color: #424b65;
-        font-weight: 800;
-        font-size: 13px;
-        text-align: center;
-    }
-
-    .rank.gold { background: linear-gradient(135deg, #ffd75e, #ffb42c); color: #5c3a00; }
-    .rank.silver { background: linear-gradient(135deg, #d9dce6, #b7bcc9); color: #3a3f4d; }
-    .rank.bronze { background: linear-gradient(135deg, #e7a97c, #c47e48); color: #4d2600; }
-
-    .points-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 8px;
-        background: #eeedff;
-        color: #5143d0;
-        font-weight: 700;
-        font-size: 13px;
-    }
-
-    .level-pill {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 20px;
-        background: #e5f2ff;
-        color: #2365a5;
-        font-weight: 700;
-        font-size: 12px;
-    }
-
-    [data-theme="dark"] .my-card {
-        background: linear-gradient(120deg, #252b3d, #1f2433);
-        border-color: #2a3145;
-    }
-
-    [data-theme="dark"] .ach,
-    [data-theme="dark"] .table-lb td {
-        background: #252b3d;
-        border-color: #2a3145;
-        color: #e8ecf5;
-    }
-
-    [data-theme="dark"] .ach.unlocked {
-        background: #3a2f1c;
-        border-color: #6b541e;
-    }
-
-    [data-theme="dark"] .ach-name,
-    [data-theme="dark"] .table-lb th {
-        color: #e8ecf5;
-    }
-
-    [data-theme="dark"] .table-lb th {
-        background: #1f2433;
-    }
+    .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 2px solid var(--border); border-radius: var(--radius); font-weight: 700; font-family: 'Space Grotesk'; }
+    .rank-badge.gold { background: #FCD34D; border-color: #B45309; }
+    .rank-badge.silver { background: #E5E7EB; border-color: #6B7280; }
+    .rank-badge.bronze { background: #FCA5A5; border-color: #991B1B; }
+    .table-lb { width: 100%; border-collapse: collapse; }
+    .table-lb th, .table-lb td { padding: 14px; text-align: left; border-bottom: 2px solid var(--border); font-size: 15px; }
+    .table-lb th { text-transform: uppercase; font-size: 12px; letter-spacing: 0.1em; color: var(--text-muted); }
+    .ach { display: flex; gap: 12px; padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); background: var(--bg); opacity: 0.5; margin-bottom: 10px; }
+    .ach.unlocked { opacity: 1; background: #FFFBEB; border-color: #F59E0B; }
+    [data-theme="dark"] .ach.unlocked { background: #2A2410; border-color: #F59E0B; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="lb-header">
-    <h1>🏆 Доска лидеров</h1>
-    <p>Самые активные защитники города</p>
-</div>
+<h1 style="font-size: 42px; margin: 0 0 30px; text-transform: uppercase;">🏆 Доска лидеров</h1>
 
 {% if my_profile %}
-    <div class="my-card">
-        <h2>Ваш профиль: {{ request.user.username }}</h2>
-        <p>
-            <strong>Баллы:</strong> {{ my_profile.points }}
-            &nbsp;•&nbsp;
-            <strong>Уровень:</strong> {{ my_profile.level }}
-            {% if my_rank %}&nbsp;•&nbsp;<strong>Место:</strong> #{{ my_rank }}{% endif %}
-        </p>
-
-        {% if my_profile.next_level_points %}
-            <p style="margin: 8px 0 0; color: #727b91; font-size: 14px;">
-                До следующего уровня: {{ my_profile.next_level_points|add:"-"|add:my_profile.points }} баллов
-                (всего нужно {{ my_profile.next_level_points }})
-            </p>
-            <div class="level-bar-wrap">
-                <div class="level-bar" style="width: {{ my_profile.progress_percent }}%;"></div>
-            </div>
-        {% else %}
-            <p style="color: #5143d0; font-weight: 700;">Максимальный уровень достигнут! 🎉</p>
-        {% endif %}
-
-        <h3 style="margin-top: 24px;">Достижения</h3>
-        <div class="achievements">
-            {% for ach in my_achievements %}
-                <div class="ach {% if ach.unlocked %}unlocked{% endif %}">
-                    <div class="ach-icon">{{ ach.icon }}</div>
-                    <div>
-                        <div class="ach-name">{{ ach.name }}</div>
-                        <div class="ach-desc">{{ ach.desc }}</div>
-                        <div class="ach-desc" style="margin-top: 4px;">
-                            Прогресс: {{ ach.current }} / {{ ach.goal }}
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+    <div class="card" style="margin-bottom: 30px;">
+        <h3 style="margin-top: 0; font-size: 20px;">Вы: {{ request.user.username }}</h3>
+        <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 16px;">
+            <div><span style="color: var(--text-muted); font-size: 13px; text-transform: uppercase;">Баллы</span><div style="font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700;">{{ my_profile.points }}</div></div>
+            <div><span style="color: var(--text-muted); font-size: 13px; text-transform: uppercase;">Уровень</span><div style="font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700;">{{ my_profile.level }}</div></div>
+            {% if my_rank %}<div><span style="color: var(--text-muted); font-size: 13px; text-transform: uppercase;">Место</span><div style="font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700;">#{{ my_rank }}</div></div>{% endif %}
         </div>
+
+        <h4 style="margin: 24px 0 12px; text-transform: uppercase; font-size: 14px;">Достижения</h4>
+        {% for ach in my_achievements %}
+            <div class="ach {% if ach.unlocked %}unlocked{% endif %}">
+                <div style="font-size: 26px; flex-shrink: 0;">{{ ach.icon }}</div>
+                <div>
+                    <div style="font-weight: 700;">{{ ach.name }}</div>
+                    <div style="font-size: 13px; color: var(--text-muted);">{{ ach.desc }} ({{ ach.current }}/{{ ach.goal }})</div>
+                </div>
+            </div>
+        {% endfor %}
     </div>
 {% else %}
-    <div class="my-card" style="text-align: center;">
-        <p>Войдите, чтобы видеть свои баллы и достижения.</p>
-        <p style="margin-top: 12px;">
-            <a href="{% url 'login' %}" class="btn">Войти</a>
-        </p>
+    <div class="card" style="text-align: center; margin-bottom: 30px;">
+        <p>Войдите, чтобы увидеть свои баллы и достижения.</p>
+        <a href="{% url 'auth' %}" class="btn">Войти</a>
     </div>
 {% endif %}
 
-<h2 style="margin-top: 32px;">Топ-20 пользователей</h2>
-
+<h2 style="font-size: 28px; margin: 0 0 20px;">Топ-20</h2>
 {% if profiles %}
-    <table class="table-lb">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Пользователь</th>
-                <th>Уровень</th>
-                <th>Баллы</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for profile in profiles %}
-                <tr>
-                    <td>
-                        <span class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
-                            {{ forloop.counter }}
-                        </span>
-                    </td>
-                    <td><strong>{{ profile.user.username }}</strong></td>
-                    <td><span class="level-pill">Ур. {{ profile.level }}</span></td>
-                    <td><span class="points-badge">{{ profile.points }}</span></td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <table class="table-lb">
+            <thead>
+                <tr><th>#</th><th>Игрок</th><th>Уровень</th><th>Баллы</th></tr>
+            </thead>
+            <tbody>
+                {% for p in profiles %}
+                    <tr>
+                        <td>
+                            <span class="rank-badge {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
+                                {{ forloop.counter }}
+                            </span>
+                        </td>
+                        <td><strong>{{ p.user.username }}</strong></td>
+                        <td>Ур. {{ p.level }}</td>
+                        <td><strong>{{ p.points }}</strong></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% else %}
-    <p style="color: #727b91;">Пока нет ни одного участника. Станьте первым!</p>
+    <p style="color: var(--text-muted);">Пока никого. Станьте первым!</p>
 {% endif %}
 {% endblock %}

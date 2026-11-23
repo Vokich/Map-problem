@@ -1,197 +1,63 @@
 {% extends "base.html" %}
-
-{% block title %}{% if is_edit %}Редактирование заявки{% else %}Создание заявки{% endif %}{% endblock %}
+{% block title %}{% if is_edit %}Редактирование{% else %}Создание заявки{% endif %}{% endblock %}
 
 {% block extra_head %}
 <style>
-    .form-page {
-        max-width: 900px;
-        margin: 0 auto;
-        animation: fadeUp .6s ease both;
-    }
-
-    .form-page h1 {
-        text-align: center;
-        margin-bottom: 25px;
-    }
-
-    .map-container,
-    .problem-form {
-        padding: 25px;
-        margin-bottom: 22px;
-        border: 1px solid #e5e8f5;
-        border-radius: 15px;
-        background: white;
-        box-shadow: 0 8px 25px rgba(70,65,160,.07);
-    }
-
-    #map {
-        width: 100%;
-        height: 400px;
-        margin-top: 18px;
-        border: 1px solid #dfe2f0;
-        border-radius: 11px;
-    }
-
-    .coordinates-info {
-        padding: 14px 18px;
-        border-radius: 10px;
-        background: linear-gradient(100deg, #f2efff, #eafaff);
-    }
-
-    .coordinates-info p {
-        margin: 6px 0;
-        color: #59627a;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        color: #424b65;
-        font-weight: 700;
-    }
-
-    .form-group input:not([type="file"]),
-    .form-group textarea,
-    .form-group select {
-        width: 100%;
-        padding: 12px 14px;
-        border: 1px solid #dfe2f0;
-        border-radius: 8px;
-        background: #fafaff;
-        color: #30394e;
-        font-size: 15px;
-        transition: border-color .2s ease, box-shadow .2s ease;
-    }
-
-    .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus {
-        outline: none;
-        border-color: #7666e8;
-        box-shadow: 0 0 0 3px rgba(101,88,232,.12);
-    }
-
-    .form-group textarea {
-        min-height: 120px;
-        resize: vertical;
-    }
-
-    .form-group input[type="file"] {
-        max-width: 100%;
-    }
-
-    small {
-        display: block;
-        margin-top: 6px;
-        color: #81899b;
-    }
-
-    .error {
-        margin-top: 7px;
-        padding: 9px 12px;
-        border-radius: 7px;
-        background: #fff0f0;
-        color: #a33f3f;
-        font-size: 14px;
-    }
-
-    .form-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid #e8eaf2;
-    }
-
-    .btn-secondary {
-        display: inline-block;
-        padding: 11px 20px;
-        border-radius: 9px;
-        background: #e9ecf4;
-        color: #48536a;
-        font-weight: 700;
-        transition: background .2s ease, transform .2s ease;
-    }
-
-    .btn-secondary:hover {
-        background: #dce1ed;
-        color: #30394e;
-        transform: translateY(-2px);
-    }
-
-    @media (max-width: 600px) {
-        .map-container, .problem-form { padding: 16px; }
-        #map { height: 330px; }
-    }
+    #map { width: 100%; height: 400px; border: 2px solid var(--border); border-radius: var(--radius); margin: 16px 0; }
+    .coords-info { background: var(--bg); padding: 16px; border: 2px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; font-family: monospace; font-size: 13px; }
+    .form-field { margin-bottom: 20px; }
+    .error-text { color: #DC2626; font-weight: 600; font-size: 13px; margin-top: 6px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="form-page">
-    <h1>{% if is_edit %}Редактирование заявки{% else %}Создание новой заявки{% endif %}</h1>
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1 style="font-size: 42px; margin: 0 0 30px; text-transform: uppercase;">
+        {% if is_edit %}Редактировать{% else %}Новая заявка{% endif %}
+    </h1>
 
-    <div class="map-container">
-        <h3>Укажите местоположение проблемы на карте:</h3>
-        <p>Нажмите на карту, чтобы отметить место. Маркер можно перемещать.</p>
-
-        <div class="coordinates-info">
-            <p><strong>Текущие координаты:</strong></p>
-            <p>Широта: <span id="latitude-display">не выбрано</span></p>
-            <p>Долгота: <span id="longitude-display">не выбрано</span></p>
-            <p>Адрес: <span id="address-display">не определен</span></p>
+    <div class="card">
+        <h3 style="margin-top: 0; font-size: 18px; text-transform: uppercase;">📍 Местоположение</h3>
+        <p style="color: var(--text-muted); margin-bottom: 0;">Кликните на карту, чтобы отметить место. Маркер можно перемещать.</p>
+        <div class="coords-info">
+            <div>Широта: <span id="lat-display">не выбрано</span></div>
+            <div>Долгота: <span id="lng-display">не выбрано</span></div>
+            <div style="margin-top: 8px;">Адрес: <span id="addr-display">не определен</span></div>
         </div>
-
         <div id="map"></div>
     </div>
 
-    <form class="problem-form" method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" class="card">
         {% csrf_token %}
 
-        <div class="form-group">
-            <label for="{{ form.title.id_for_label }}">Название проблемы:</label>
+        <div class="form-field">
+            <label>Название проблемы</label>
             {{ form.title }}
-            {% if form.title.errors %}
-                <div class="error">{{ form.title.errors }}</div>
-            {% endif %}
+            {% if form.title.errors %}<div class="error-text">{{ form.title.errors }}</div>{% endif %}
         </div>
 
-        <div class="form-group">
-            <label for="{{ form.description.id_for_label }}">Описание:</label>
+        <div class="form-field">
+            <label>Описание</label>
             {{ form.description }}
-            {% if form.description.errors %}
-                <div class="error">{{ form.description.errors }}</div>
-            {% endif %}
+            {% if form.description.errors %}<div class="error-text">{{ form.description.errors }}</div>{% endif %}
         </div>
 
-        <div class="form-group">
-            <label for="{{ form.problem_type.id_for_label }}">Тип проблемы:</label>
+        <div class="form-field">
+            <label>Тип проблемы</label>
             {{ form.problem_type }}
-            {% if form.problem_type.errors %}
-                <div class="error">{{ form.problem_type.errors }}</div>
-            {% endif %}
+            {% if form.problem_type.errors %}<div class="error-text">{{ form.problem_type.errors }}</div>{% endif %}
         </div>
 
-        <div class="form-group">
-            <label for="{{ form.address.id_for_label }}">Адрес:</label>
+        <div class="form-field">
+            <label>Адрес</label>
             {{ form.address }}
-            <small>Адрес будет автоматически определен по выбранной точке на карте</small>
-            {% if form.address.errors %}
-                <div class="error">{{ form.address.errors }}</div>
-            {% endif %}
+            {% if form.address.errors %}<div class="error-text">{{ form.address.errors }}</div>{% endif %}
         </div>
 
-        <div class="form-group">
-            <label for="{{ form.picture.id_for_label }}">Фотография проблемы (необязательно):</label>
+        <div class="form-field">
+            <label>Фотография (необязательно)</label>
             {{ form.picture }}
-            {% if form.picture.errors %}
-                <div class="error">{{ form.picture.errors }}</div>
-            {% endif %}
+            {% if form.picture.errors %}<div class="error-text">{{ form.picture.errors }}</div>{% endif %}
         </div>
 
         <div style="display: none;">
@@ -199,109 +65,68 @@
             {{ form.longitude }}
         </div>
 
-        <div class="form-actions">
-            <button type="submit">{% if is_edit %}Сохранить изменения{% else %}Создать заявку{% endif %}</button>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px;">
+            <button type="submit" class="btn">{% if is_edit %}Сохранить{% else %}Создать{% endif %}</button>
             {% if is_edit %}
-                <a href="{% url 'problem_detail' problem.pk %}" class="btn-secondary">Отмена</a>
+                <a href="{% url 'problem_detail' problem.pk %}" class="btn btn-outline">Отмена</a>
             {% else %}
-                <a href="{% url 'problem_list' %}" class="btn-secondary">Отмена</a>
+                <a href="{% url 'problem_list' %}" class="btn btn-outline">Отмена</a>
             {% endif %}
         </div>
-
-        {% if form.non_field_errors %}
-            <div class="error">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
     </form>
 </div>
 
-<script src="https://api-maps.yandex.ru/2.1/?apikey={{ YANDEX_MAPS_API_KEY }}&lang=ru_RU"
-        type="text/javascript"></script>
-
+<script src="https://api-maps.yandex.ru/2.1/?apikey={{ YANDEX_MAPS_API_KEY }}&lang=ru_RU"></script>
 <script>
     ymaps.ready(function () {
         const map = new ymaps.Map("map", {
             center: [55.751244, 37.618423],
             zoom: 12,
-            controls: ["zoomControl", "fullscreenControl", "typeSelector"]
+            controls: ["zoomControl"]
         });
 
-        const latitudeField = document.getElementById("id_latitude");
-        const longitudeField = document.getElementById("id_longitude");
-        const addressField = document.getElementById("id_address");
-
-        const latitudeDisplay = document.getElementById("latitude-display");
-        const longitudeDisplay = document.getElementById("longitude-display");
-        const addressDisplay = document.getElementById("address-display");
+        const latField = document.getElementById("id_latitude");
+        const lngField = document.getElementById("id_longitude");
+        const addrField = document.getElementById("id_address");
+        const latDisplay = document.getElementById("lat-display");
+        const lngDisplay = document.getElementById("lng-display");
+        const addrDisplay = document.getElementById("addr-display");
 
         let marker = null;
 
-        function updateCoordinates(coords) {
-            const lat = coords[0];
-            const lng = coords[1];
+        function update(coords) {
+            const lat = coords[0], lng = coords[1];
+            latField.value = lat.toFixed(7);
+            lngField.value = lng.toFixed(7);
+            latDisplay.textContent = lat.toFixed(6);
+            lngDisplay.textContent = lng.toFixed(6);
+            addrDisplay.textContent = "Определение...";
 
-            latitudeField.value = lat.toFixed(7);
-            longitudeField.value = lng.toFixed(7);
-
-            latitudeDisplay.textContent = lat.toFixed(6);
-            longitudeDisplay.textContent = lng.toFixed(6);
-            addressDisplay.textContent = "Определение адреса...";
-
-            ymaps.geocode(coords, { results: 1 }).then(function (res) {
-                const firstGeoObject = res.geoObjects.get(0);
-
-                if (firstGeoObject) {
-                    const address = firstGeoObject.getAddressLine();
-                    addressDisplay.textContent = address;
-
-                    if (addressField) {
-                        addressField.value = address;
-                    }
+            ymaps.geocode(coords, { results: 1 }).then(res => {
+                const obj = res.geoObjects.get(0);
+                if (obj) {
+                    const addr = obj.getAddressLine();
+                    addrDisplay.textContent = addr;
+                    addrField.value = addr;
                 } else {
-                    addressDisplay.textContent = "Адрес не определен";
+                    addrDisplay.textContent = "Не определен";
                 }
-            }).catch(function () {
-                addressDisplay.textContent = "Не удалось определить адрес";
-            });
+            }).catch(() => { addrDisplay.textContent = "Ошибка"; });
         }
 
-        function placeMarker(coords) {
-            if (marker) {
-                map.geoObjects.remove(marker);
-            }
-
-            marker = new ymaps.Placemark(
-                coords,
-                { balloonContent: "Местоположение проблемы" },
-                {
-                    draggable: true,
-                    preset: "islands#violetDotIcon"
-                }
-            );
-
+        function setMarker(coords) {
+            if (marker) map.geoObjects.remove(marker);
+            marker = new ymaps.Placemark(coords, {}, { draggable: true, preset: "islands#blackDotIcon" });
             map.geoObjects.add(marker);
-            marker.events.add("dragend", function () {
-                updateCoordinates(marker.geometry.getCoordinates());
-            });
-
-            updateCoordinates(coords);
+            marker.events.add("dragend", () => update(marker.geometry.getCoordinates()));
+            update(coords);
         }
 
-        map.events.add("click", function (event) {
-            placeMarker(event.get("coords"));
-        });
+        map.events.add("click", e => setMarker(e.get("coords")));
 
-        if (latitudeField.value && longitudeField.value) {
-            const savedCoords = [
-                parseFloat(latitudeField.value),
-                parseFloat(longitudeField.value)
-            ];
-
-            if (savedCoords.every(Number.isFinite)) {
-                placeMarker(savedCoords);
-                map.setCenter(savedCoords, 15);
-            }
+        if (latField.value && lngField.value) {
+            const c = [parseFloat(latField.value), parseFloat(lngField.value)];
+            if (c.every(Number.isFinite)) { setMarker(c); map.setCenter(c, 15); }
         }
     });
 </script>

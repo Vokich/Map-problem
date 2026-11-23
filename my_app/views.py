@@ -1,5 +1,4 @@
 from datetime import timedelta
-
 from io import BytesIO
 
 import qrcode
@@ -29,20 +28,14 @@ def index(request):
         'users': User.objects.count(),
         'problems': Problem.objects.count(),
         'completed': Problem.objects.filter(status=Problem.Status.COMPLETED).count(),
-        'points': UserProfile.objects.aggregate(total=Count('id'))['total'] or 0,
+        'points': sum(p.points for p in UserProfile.objects.all()),
     }
-    total_points = 0
-    for p in UserProfile.objects.all():
-        total_points += p.points
-    stats['points'] = total_points
-
     top_problems = (
         Problem.objects
         .annotate(votes_total=Count('votes'))
         .filter(votes_total__gt=0)
         .order_by('-votes_total')[:3]
     )
-
     return render(request, 'index.html', {'stats': stats, 'top_problems': top_problems})
 
 
@@ -60,36 +53,43 @@ def map(request):
             data['status_code'] = p.status
             data['votes'] = p.votes_total
             problems_data.append(data)
-
     return render(request, 'map.html', {'problems': problems_data, 'form': ProblemForm()})
 
 
-def reg(request):
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            messages.success(request, 'Регистрация успешна! Добро пожаловать.')
-            return redirect('index')
-    else:
-        form = UserRegistrationForm()
-    return render(request, 'registration.html', {'form': form})
+def auth_view(request):
+    if request.user.is_authenticated:
+        return redirect('index')
 
+    is_register = request.GET.get('tab') == 'register'
+    login_form = LoginForm()
+    reg_form = UserRegistrationForm()
 
-def login_form(request):
     if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                login(request, user)
+        if 'login_submit' in request.POST:
+            login_form = LoginForm(request, data=request.POST)
+            if login_form.is_valid():
+                user = authenticate(
+                    request,
+                    username=login_form.cleaned_data.get('username'),
+                    password=login_form.cleaned_data.get('password'),
+                )
+                if user:
+                    login(request, user)
+                    return redirect('index')
+        elif 'register_submit' in request.POST:
+            is_register = True
+            reg_form = UserRegistrationForm(request.POST)
+            if reg_form.is_valid():
+                user = reg_form.save()
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                messages.success(request, 'Аккаунт создан! Добро пожаловать.')
                 return redirect('index')
-    else:
-        form = LoginForm()
-    return render(request, 'login.html', {'form': form})
+
+    return render(request, 'auth.html', {
+        'login_form': login_form,
+        'reg_form': reg_form,
+        'is_register': is_register,
+    })
 
 
 def logout_form(request):
@@ -133,54 +133,47 @@ def problem_edit(request, pk):
 
 
 @login_required
+@require_POST
 def problem_delete(request, pk):
     problem = get_object_or_404(Problem, pk=pk)
-    if problem.author != request.user and not request.user.is_staff:
-        messages.error(request, 'Вы не можете удалить эту заявку.')
-        return redirect('problem_detail', pk=pk)
-
-    if request.method == 'POST':
+    if problem.author == request.user or request.user.is_staff:
         problem.delete()
         messages.success(request, 'Заявка удалена.')
         return redirect('problem_list')
-    return render(request, 'problem_confirm_delete.html', {'problem': problem})
+    messages.error(request, 'Нет прав на удаление.')
+    return redirect('problem_detail', pk=pk)
 
 
 @login_required
+@require_POST
 def problem_change_status(request, pk):
     if not request.user.is_staff:
         messages.error(request, 'Только модераторы могут менять статус.')
         return redirect('problem_detail', pk=pk)
 
     problem = get_object_or_404(Problem, pk=pk)
-    if request.method == 'POST':
-        old_status = problem.status
-        form = StatusChangeForm(request.POST, instance=problem)
-        if form.is_valid():
-            form.save()
-            messages.success(
-                request, f'Статус изменён на «{problem.get_status_display()}».'
-            )
+    old_status = problem.status
+    form = StatusChangeForm(request.POST, instance=problem)
+    if form.is_valid():
+        form.save()
+        messages.success(request, f'Статус изменён на «{problem.get_status_display()}».')
 
-            if (
-                old_status != problem.status
-                and problem.author
-                and problem.author.email
-            ):
-                send_mail(
-                    subject=f'Статус вашей заявки «{problem.title}» изменён',
-                    message=(
-                        f'Здравствуйте, {problem.author.username}!\n\n'
-                        f'Статус вашей заявки «{problem.title}» изменён.\n'
-                        f'Новый статус: {problem.get_status_display()}.\n\n'
-                        f'Подробности: '
-                        f'{request.build_absolute_uri(problem.get_absolute_url())}\n\n'
-                        f'— Сайт «Проблемы городов»'
-                    ),
-                    from_email=None,
-                    recipient_list=[problem.author.email],
-                    fail_silently=True,
-                )
+        if (
+            old_status != problem.status
+            and problem.author
+            and problem.author.email
+        ):
+            send_mail(
+                subject=f'Статус вашей заявки «{problem.title}» изменён',
+                message=(
+                    f'Здравствуйте, {problem.author.username}!\n\n'
+                    f'Новый статус: {problem.get_status_display()}.\n\n'
+                    f'Подробности: {request.build_absolute_uri(problem.get_absolute_url())}'
+                ),
+                from_email=None,
+                recipient_list=[problem.author.email],
+                fail_silently=True,
+            )
     return redirect('problem_detail', pk=pk)
 
 
@@ -188,11 +181,9 @@ def problem_change_status(request, pk):
 @require_POST
 def problem_vote(request, pk):
     problem = get_object_or_404(Problem, pk=pk)
-    vote, created = ProblemVote.objects.get_or_create(
-        problem=problem, user=request.user
-    )
+    vote, created = ProblemVote.objects.get_or_create(problem=problem, user=request.user)
     if created:
-        messages.success(request, 'Голос учтён! Спасибо, что поддерживаете.')
+        messages.success(request, 'Голос учтён!')
     else:
         vote.delete()
         messages.info(request, 'Голос отозван.')
@@ -209,24 +200,16 @@ def comment_add(request, pk):
         comment.problem = problem
         comment.author = request.user
         comment.save()
+        messages.success(request, 'Комментарий добавлен.')
 
         if problem.author and problem.author.email and problem.author != request.user:
             send_mail(
-                subject=f'Новый комментарий к заявке «{problem.title}»',
-                message=(
-                    f'Здравствуйте, {problem.author.username}!\n\n'
-                    f'{request.user.username} оставил комментарий:\n'
-                    f'«{comment.text}»\n\n'
-                    f'Подробности: '
-                    f'{request.build_absolute_uri(problem.get_absolute_url())}\n\n'
-                    f'— Сайт «Проблемы городов»'
-                ),
+                subject=f'Новый комментарий к «{problem.title}»',
+                message=f'{request.user.username}: {comment.text}',
                 from_email=None,
                 recipient_list=[problem.author.email],
                 fail_silently=True,
             )
-
-        messages.success(request, 'Комментарий добавлен.')
     else:
         messages.error(request, 'Не удалось добавить комментарий.')
     return redirect('problem_detail', pk=pk)
@@ -237,19 +220,10 @@ def comment_add(request, pk):
 def comment_delete(request, pk):
     comment = get_object_or_404(Comment, pk=pk)
     problem_pk = comment.problem_id
-    if comment.author != request.user and not request.user.is_staff:
-        messages.error(request, 'Вы не можете удалить этот комментарий.')
-        return redirect('problem_detail', pk=problem_pk)
-
-    comment.delete()
-    messages.success(request, 'Комментарий удалён.')
+    if comment.author == request.user or request.user.is_staff:
+        comment.delete()
+        messages.success(request, 'Комментарий удалён.')
     return redirect('problem_detail', pk=problem_pk)
-
-
-def _paginate_query_string(request):
-    q = request.GET.copy()
-    q.pop('page', None)
-    return q.urlencode()
 
 
 def problem_list_view(request):
@@ -275,11 +249,15 @@ def problem_list_view(request):
     paginator = Paginator(problems, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
 
+    q = request.GET.copy()
+    q.pop('page', None)
+    query_string = q.urlencode()
+
     return render(request, 'problem_list.html', {
         'problems': page_obj,
         'page_obj': page_obj,
         'filter_form': filter_form,
-        'query_string': _paginate_query_string(request),
+        'query_string': query_string,
         'is_my_problems': False,
     })
 
@@ -294,11 +272,15 @@ def my_problems_view(request):
     paginator = Paginator(problems, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
 
+    q = request.GET.copy()
+    q.pop('page', None)
+    query_string = q.urlencode()
+
     return render(request, 'problem_list.html', {
         'problems': page_obj,
         'page_obj': page_obj,
         'filter_form': ProblemFilterForm(),
-        'query_string': _paginate_query_string(request),
+        'query_string': query_string,
         'is_my_problems': True,
     })
 
@@ -316,20 +298,15 @@ def problem_detail_view(request, pk):
 
     user_voted = False
     if request.user.is_authenticated:
-        user_voted = ProblemVote.objects.filter(
-            problem=problem, user=request.user
-        ).exists()
-
-    comments = problem.comments.select_related('author').all()
-    comment_form = CommentForm()
+        user_voted = ProblemVote.objects.filter(problem=problem, user=request.user).exists()
 
     return render(request, 'problem_detail.html', {
         'problem': problem,
         'can_edit': can_edit,
         'status_form': status_form,
         'user_voted': user_voted,
-        'comments': comments,
-        'comment_form': comment_form,
+        'comments': problem.comments.select_related('author').all(),
+        'comment_form': CommentForm(),
     })
 
 
@@ -364,17 +341,14 @@ def admin_dashboard(request):
         .annotate(count=Count('id'))
         .order_by('month')
     )
-    months_labels = []
-    months_values = []
-    for row in months_qs:
-        months_labels.append(row['month'].strftime('%m.%Y'))
-        months_values.append(row['count'])
+    months_labels = [row['month'].strftime('%m.%Y') for row in months_qs]
+    months_values = [row['count'] for row in months_qs]
 
     statuses_chart = [
-        {'label': 'Новые', 'value': stats['new'], 'color': '#2365a5'},
-        {'label': 'В процессе', 'value': stats['in_progress'], 'color': '#d49a2d'},
-        {'label': 'Решены', 'value': stats['completed'], 'color': '#187647'},
-        {'label': 'Отклонены', 'value': stats['rejected'], 'color': '#a53d3d'},
+        {'label': 'Новые', 'value': stats['new'], 'color': '#3B82F6'},
+        {'label': 'В процессе', 'value': stats['in_progress'], 'color': '#F59E0B'},
+        {'label': 'Решены', 'value': stats['completed'], 'color': '#10B981'},
+        {'label': 'Отклонены', 'value': stats['rejected'], 'color': '#EF4444'},
     ]
 
     week_ago = timezone.now() - timedelta(days=7)
@@ -395,11 +369,7 @@ def leaderboard_view(request):
     for user in User.objects.filter(profile__isnull=True):
         UserProfile.objects.create(user=user)
 
-    profiles = (
-        UserProfile.objects
-        .select_related('user')
-        .order_by('-points')[:20]
-    )
+    profiles = UserProfile.objects.select_related('user').order_by('-points')[:20]
 
     my_achievements = None
     my_profile = None
@@ -407,9 +377,7 @@ def leaderboard_view(request):
     if request.user.is_authenticated:
         my_profile, _ = UserProfile.objects.get_or_create(user=request.user)
         my_achievements = get_user_achievements(request.user)
-        my_rank = (
-            UserProfile.objects.filter(points__gt=my_profile.points).count() + 1
-        )
+        my_rank = UserProfile.objects.filter(points__gt=my_profile.points).count() + 1
 
     return render(request, 'leaderboard.html', {
         'profiles': profiles,
@@ -426,7 +394,7 @@ def qr_code_view(request, pk):
     qr = qrcode.QRCode(version=1, box_size=10, border=2)
     qr.add_data(url)
     qr.make(fit=True)
-    img = qr.make_image(fill_color='#5143d0', back_color='white')
+    img = qr.make_image(fill_color='#FF4500', back_color='white')
 
     buf = BytesIO()
     img.save(buf, format='PNG')

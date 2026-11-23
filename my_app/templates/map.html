@@ -1,222 +1,65 @@
 {% extends "base.html" %}
-
-{% block title %}Карта всех проблем{% endblock %}
+{% block title %}Карта проблем{% endblock %}
 
 {% block extra_head %}
 <style>
-    .map-card {
-        padding: 25px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: var(--surface);
-        box-shadow: var(--shadow-md);
-    }
-
-    #map {
-        width: 100%;
-        height: 550px;
-        margin: 20px 0;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .map-toolbar {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin: 14px 0;
-    }
-
-    .map-btn {
-        padding: 10px 16px;
-        border-radius: 10px;
-        border: 2px solid var(--primary);
-        background: white;
-        color: var(--primary);
-        font-weight: 700;
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 14px;
-        transition: var(--transition);
-        box-shadow: none;
-    }
-
-    .map-btn:hover {
-        background: var(--primary-light);
-        transform: translateY(-2px);
-    }
-
-    .map-btn.active {
-        background: linear-gradient(110deg, #6558e8, #8870f2);
-        color: white;
-        border-color: transparent;
-    }
-
-    .map-info {
-        padding: 10px 14px;
-        border-radius: 8px;
-        background: #f7f7ff;
-        color: var(--muted);
-        font-size: 13px;
-    }
-
-    .map-description {
-        color: var(--muted);
-    }
-
-    .problem-item {
-        margin: 14px 0;
-        padding: 18px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: #fafaff;
-        transition: var(--transition);
-    }
-
-    .problem-item:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .problem-item h3 {
-        margin-top: 0;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .status-new { background: #e5f2ff; color: #2365a5; }
-    .status-in_progress { background: #fff2d9; color: #946000; }
-    .status-completed { background: #e1f7eb; color: #187647; }
-    .status-rejected { background: #ffe6e6; color: #a53d3d; }
-
-    .votes-badge {
-        display: inline-block;
-        margin-left: 6px;
-        padding: 3px 10px;
-        border-radius: 20px;
-        background: linear-gradient(110deg, #fff2d9, #fff8e6);
-        color: #946000;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid #f3dfb0;
-    }
-
-    [data-theme="dark"] .map-btn {
-        background: var(--surface);
-        color: var(--primary);
-    }
-
-    [data-theme="dark"] .map-info {
-        background: #252b3d;
-    }
-
-    [data-theme="dark"] .problem-item {
-        background: #252b3d;
-        border-color: var(--border);
-    }
-
-    @media (max-width: 600px) {
-        #map { height: 420px; }
-        .map-card { padding: 15px; }
-    }
+    #map { width: 100%; height: 550px; border: 2px solid var(--border); border-radius: var(--radius); margin: 20px 0; }
+    .map-toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .map-status { padding: 8px 14px; background: var(--bg); border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; font-weight: 600; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="map-card">
-    <h1>Карта городских проблем</h1>
+<h1 style="font-size: 42px; margin: 0 0 20px; text-transform: uppercase;">Карта проблем</h1>
+<p style="color: var(--text-muted); margin-bottom: 20px; font-size: 18px;">Маркеры группируются. Красная зона — концентрация проблем.</p>
 
-    <p class="map-description">
-        Маркеры группируются в кластеры при отдалении. Красная зона — концентрация проблем.
-    </p>
-
-    <div class="map-toolbar">
-        <button type="button" class="map-btn" id="near-me-btn">
-            📍 Рядом со мной
-        </button>
-        <button type="button" class="map-btn active" id="all-btn">
-            🌍 Показать все
-        </button>
-        <span class="map-info" id="map-status" style="display:none;"></span>
-    </div>
-
-    <div id="map"></div>
-
-    <div class="problem-list">
-        <h2>Все заявки с координатами ({{ problems|length }})</h2>
-
-        {% if problems %}
-            {% for problem in problems %}
-                <div class="problem-item">
-                    <h3>
-                        {{ problem.title }}
-                        <span class="status-badge status-{{ problem.status_code|lower }}">
-                            {{ problem.status }}
-                        </span>
-                        {% if problem.votes %}
-                            <span class="votes-badge">👍 {{ problem.votes }}</span>
-                        {% endif %}
-                    </h3>
-
-                    <p><strong>Тип:</strong> {{ problem.type }}</p>
-                    <p><strong>Координаты:</strong> {{ problem.lat|floatformat:6 }}, {{ problem.lng|floatformat:6 }}</p>
-                    <p>{{ problem.description }}</p>
-                    <a href="{{ problem.url }}">Подробнее</a>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>Пока нет заявок с указанными координатами.</p>
-            <a href="{% url 'problem_create' %}" class="btn">Создать первую заявку</a>
-        {% endif %}
-    </div>
+<div class="map-toolbar">
+    <button type="button" class="btn btn-outline" id="near-btn">📍 Рядом со мной</button>
+    <button type="button" class="btn" id="all-btn">🌍 Все заявки</button>
+    <span class="map-status" id="status" style="display:none;"></span>
 </div>
 
-<script src="https://api-maps.yandex.ru/2.1/?apikey={{ YANDEX_MAPS_API_KEY }}&lang=ru_RU&modules=heatmap"
-        type="text/javascript"></script>
+<div id="map"></div>
 
+<h2 style="font-size: 28px; margin: 40px 0 20px;">Заявки на карте: {{ problems|length }}</h2>
+
+<div style="display: grid; gap: 16px;">
+    {% for problem in problems %}
+        <div class="card" style="padding: 20px;">
+            <h3 style="margin: 0 0 8px;"><a href="{{ problem.url }}">{{ problem.title }}</a></h3>
+            <p style="color: var(--text-muted); margin: 4px 0; font-size: 14px;">{{ problem.type }} • {{ problem.lat|floatformat:5 }}, {{ problem.lng|floatformat:5 }}</p>
+            <p style="margin: 8px 0 0; font-size: 15px;">{{ problem.description }}</p>
+        </div>
+    {% empty %}
+        <div class="card" style="text-align: center; padding: 40px;">
+            <p style="margin: 0;">Пока нет заявок с координатами.</p>
+        </div>
+    {% endfor %}
+</div>
+
+<script src="https://api-maps.yandex.ru/2.1/?apikey={{ YANDEX_MAPS_API_KEY }}&lang=ru_RU&modules=heatmap"></script>
 <script>
     ymaps.ready(function () {
         const map = new ymaps.Map("map", {
             center: [55.751244, 37.618423],
             zoom: 11,
-            controls: ["zoomControl", "fullscreenControl", "typeSelector"]
+            controls: ["zoomControl", "fullscreenControl"]
         });
 
-        const allPoints = [];
-        const allPlacemarks = [];
+        const points = [];
+        const placemarks = [];
 
-        {% for problem in problems %}
+        {% for p in problems %}
             (function () {
-                const lat = Number("{{ problem.lat|escapejs }}".replace(",", "."));
-                const lng = Number("{{ problem.lng|escapejs }}".replace(",", "."));
-
+                const lat = Number("{{ p.lat|escapejs }}".replace(",", "."));
+                const lng = Number("{{ p.lng|escapejs }}".replace(",", "."));
                 if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-                const marker = new ymaps.Placemark(
-                    [lat, lng],
-                    {
-                        balloonContentHeader: "{{ problem.title|escapejs }}",
-                        balloonContentBody:
-                            "<p><strong>Тип:</strong> {{ problem.type|escapejs }}</p>" +
-                            "<p><strong>Статус:</strong> {{ problem.status|escapejs }}</p>" +
-                            "<p>{{ problem.description|escapejs }}</p>" +
-                            '<a href="{{ problem.url|escapejs }}">Подробнее</a>'
-                    },
-                    {
-                        preset: "islands#violetCircleDotIcon",
-                        balloonCloseButton: true
-                    }
-                );
-
-                allPlacemarks.push(marker);
-                allPoints.push([lat, lng]);
+                const marker = new ymaps.Placemark([lat, lng], {
+                    balloonContentHeader: "{{ p.title|escapejs }}",
+                    balloonContentBody: "<p>{{ p.type|escapejs }} • {{ p.status|escapejs }}</p><p>{{ p.description|escapejs }}</p><a href='{{ p.url|escapejs }}'>Подробнее</a>"
+                }, { preset: "islands#blackDotIcon" });
+                placemarks.push(marker);
+                points.push([lat, lng]);
             })();
         {% endfor %}
 
@@ -227,126 +70,73 @@
             if (clusterer) map.geoObjects.remove(clusterer);
             if (heatmap) map.geoObjects.remove(heatmap);
 
-            if (allPlacemarks.length) {
-                clusterer = new ymaps.Clusterer({
-                    preset: "islands#invertedVioletClusterIcons",
-                    groupByCoordinates: false
-                });
-                clusterer.add(allPlacemarks);
+            if (placemarks.length) {
+                clusterer = new ymaps.Clusterer({ preset: "islands#blackClusterIcons" });
+                clusterer.add(placemarks);
                 map.geoObjects.add(clusterer);
             }
 
             {% if problems %}
                 try {
                     if (ymaps.Heatmap) {
-                        heatmap = new ymaps.Heatmap(allPoints, {
-                            radius: 40,
-                            opacity: 0.5,
-                            dissipating: true,
+                        heatmap = new ymaps.Heatmap(points, {
+                            radius: 40, opacity: 0.5, dissipating: true,
                             gradient: {
-                                0.1: 'rgba(128, 255, 128, 0.3)',
-                                0.4: 'rgba(255, 255, 128, 0.5)',
-                                0.7: 'rgba(255, 128, 0, 0.6)',
-                                1.0: 'rgba(255, 0, 0, 0.8)'
+                                0.1: 'rgba(128,255,128,0.3)',
+                                0.4: 'rgba(255,255,128,0.5)',
+                                0.7: 'rgba(255,128,0,0.6)',
+                                1.0: 'rgba(255,0,0,0.8)'
                             }
                         });
                         map.geoObjects.add(heatmap);
                     }
-                } catch (e) {
-                    console.warn('Heatmap error:', e);
-                }
+                } catch (e) {}
             {% endif %}
 
-            if (allPoints.length === 1) {
-                map.setCenter(allPoints[0], 15);
-            } else if (allPoints.length > 1) {
-                map.setBounds(
-                    ymaps.util.bounds.fromPoints(allPoints),
-                    { checkZoomRange: true, zoomMargin: 40 }
-                );
-            }
+            if (points.length === 1) map.setCenter(points[0], 15);
+            else if (points.length > 1) map.setBounds(ymaps.util.bounds.fromPoints(points), { checkZoomRange: true, zoomMargin: 40 });
         }
 
         renderAll();
 
-        function haversine(lat1, lon1, lat2, lon2) {
+        function dist(a, b, c, d) {
             const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const dLat = (c - a) * Math.PI / 180;
+            const dLon = (d - b) * Math.PI / 180;
+            const x = Math.sin(dLat / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
         }
 
-        const nearBtn = document.getElementById('near-me-btn');
-        const allBtn = document.getElementById('all-btn');
-        const statusEl = document.getElementById('map-status');
+        document.getElementById('near-btn').addEventListener('click', function () {
+            if (!navigator.geolocation) return alert('Нет поддержки геолокации');
+            const status = document.getElementById('status');
+            status.style.display = 'inline-block';
+            status.textContent = 'Определение...';
 
-        nearBtn.addEventListener('click', function () {
-            if (!navigator.geolocation) {
-                alert('Ваш браузер не поддерживает геолокацию.');
-                return;
-            }
-
-            nearBtn.classList.add('active');
-            allBtn.classList.remove('active');
-            statusEl.style.display = 'inline-block';
-            statusEl.textContent = 'Определяем местоположение...';
-
-            navigator.geolocation.getCurrentPosition(
-                function (pos) {
-                    const userLat = pos.coords.latitude;
-                    const userLng = pos.coords.longitude;
-                    const radius = 2;
-
-                    const nearby = allPlacemarks.filter(function (p) {
-                        const c = p.geometry.getCoordinates();
-                        return haversine(userLat, userLng, c[0], c[1]) <= radius;
-                    });
-
-                    if (clusterer) map.geoObjects.remove(clusterer);
-                    if (heatmap) map.geoObjects.remove(heatmap);
-
-                    if (nearby.length) {
-                        const nearCluster = new ymaps.Clusterer({
-                            preset: "islands#invertedBlueClusterIcons"
-                        });
-                        nearCluster.add(nearby);
-                        map.geoObjects.add(nearCluster);
-                        clusterer = nearCluster;
-                    }
-
-                    map.setCenter([userLat, userLng], 14);
-
-                    const userMark = new ymaps.Placemark(
-                        [userLat, userLng],
-                        { balloonContent: 'Вы здесь' },
-                        { preset: 'islands#redIcon' }
-                    );
-                    map.geoObjects.add(userMark);
-
-                    statusEl.textContent = 'Найдено ' + nearby.length + ' заявок в радиусе ' + radius + ' км';
-                },
-                function (err) {
-                    statusEl.textContent = 'Не удалось определить местоположение';
-                    nearBtn.classList.remove('active');
-                    allBtn.classList.add('active');
+            navigator.geolocation.getCurrentPosition(pos => {
+                const uLat = pos.coords.latitude, uLng = pos.coords.longitude;
+                const near = placemarks.filter(p => {
+                    const c = p.geometry.getCoordinates();
+                    return dist(uLat, uLng, c[0], c[1]) <= 2;
+                });
+                if (clusterer) map.geoObjects.remove(clusterer);
+                if (heatmap) map.geoObjects.remove(heatmap);
+                if (near.length) {
+                    clusterer = new ymaps.Clusterer({ preset: "islands#blueClusterIcons" });
+                    clusterer.add(near);
+                    map.geoObjects.add(clusterer);
                 }
-            );
+                map.setCenter([uLat, uLng], 14);
+                map.geoObjects.add(new ymaps.Placemark([uLat, uLng], { balloonContent: 'Вы здесь' }, { preset: 'islands#redIcon' }));
+                status.textContent = 'Найдено ' + near.length + ' заявок рядом';
+            }, () => { status.textContent = 'Ошибка геолокации'; });
         });
 
-        allBtn.addEventListener('click', function () {
-            allBtn.classList.add('active');
-            nearBtn.classList.remove('active');
-            statusEl.style.display = 'none';
-
-            map.geoObjects.each(function (obj) {
-                if (obj.options && obj.options.get('preset') === 'islands#redIcon') {
-                    map.geoObjects.remove(obj);
-                }
+        document.getElementById('all-btn').addEventListener('click', function () {
+            document.getElementById('status').style.display = 'none';
+            map.geoObjects.each(o => {
+                if (o.options && o.options.get('preset') === 'islands#redIcon') map.geoObjects.remove(o);
             });
-
             renderAll();
         });
     });
